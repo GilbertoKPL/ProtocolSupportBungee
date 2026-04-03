@@ -35,7 +35,7 @@ public class PluginConfig {
 		}
 	}
 
-	private static volatile boolean encapsulationEnabledByDefault = true;
+	private static volatile boolean encapsulationEnabledByDefault = false;
 	private static volatile Set<String> noEncapsulationTargets = Collections.emptySet();
 	private static volatile List<VersionRoute> versionRoutes = Collections.emptyList();
 
@@ -51,7 +51,7 @@ public class PluginConfig {
 		createDefaultConfig(configFile, plugin);
 		try {
 			Configuration config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(configFile);
-			encapsulationEnabledByDefault = config.getBoolean("encapsulation.enabled-by-default", true);
+			encapsulationEnabledByDefault = config.getBoolean("encapsulation.enabled-by-default", false);
 			noEncapsulationTargets = parseTargets(config.getStringList("encapsulation.disable-for-targets"));
 			List<VersionRoute> routes = new ArrayList<>();
 			Configuration routingSection = config.getSection("version-routing");
@@ -82,7 +82,7 @@ public class PluginConfig {
 			);
 		} catch (IOException e) {
 			plugin.getLogger().log(Level.SEVERE, "Failed to load config.yml, using defaults", e);
-			encapsulationEnabledByDefault = true;
+			encapsulationEnabledByDefault = false;
 			noEncapsulationTargets = Collections.emptySet();
 			versionRoutes = Collections.emptyList();
 		}
@@ -164,9 +164,11 @@ public class PluginConfig {
 				"\n",
 				"# ProtocolSupportBungee config",
 				"encapsulation:",
-				"  # Keep true for normal behavior.",
-				"  enabled-by-default: true",
-				"  # Backend targets (host:port) that should use the old/direct method without encapsulated handshake.",
+				"  # Set to true ONLY if ALL your backend servers have ProtocolSupport plugin installed.",
+				"  # If any backend server does NOT have ProtocolSupport, keep this false.",
+				"  enabled-by-default: false",
+				"  # Backend targets (host:port) that should USE the encapsulated handshake (when enabled-by-default is false).",
+				"  # Or targets to SKIP encapsulation for (when enabled-by-default is true).",
 				"  disable-for-targets: []",
 				"",
 				"# Version-based routing: route players to specific BungeeCord servers based on their client version.",
