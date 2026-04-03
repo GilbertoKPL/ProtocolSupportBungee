@@ -30,7 +30,7 @@ public class PlayerListItemPacket extends LegacyDefinedReadableMiddlePacket {
 		action = add ? Action.ADD_PLAYER : Action.REMOVE_PLAYER;
 		Item item = new Item();
 		item.setUsername(username);
-		item.setDisplayName(new net.md_5.bungee.api.chat.TextComponent(username));
+		item.setDisplayName(String.valueOf(new net.md_5.bungee.api.chat.TextComponent(username)));
 		item.setGamemode(0);
 		item.setPing(ping);
 		items = new Item[] { item };

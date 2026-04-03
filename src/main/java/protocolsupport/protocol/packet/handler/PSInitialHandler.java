@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import javax.crypto.SecretKey;
 
 import com.google.common.base.Preconditions;
-import com.mojang.authlib.properties.Property;
+import net.md_5.bungee.protocol.data.Property;
 
 import net.md_5.bungee.BungeeCord;
 import net.md_5.bungee.EncryptionUtil;

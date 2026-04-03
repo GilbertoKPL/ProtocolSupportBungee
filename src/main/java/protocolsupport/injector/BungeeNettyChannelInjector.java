@@ -69,7 +69,7 @@ public class BungeeNettyChannelInjector extends MessageToByteEncoder<ByteBuf> {
 
 	private static boolean tryInjectViaModernUnsafeFrontendInitializer() {
 		try {
-			Object unsafe = ProxyServer.getInstance().unsafe();
+			Object unsafe = ProxyServer.getInstance();
 			Method setFrontendInitializerMethod = findMethod(unsafe.getClass(), "setFrontendChannelInitializer", 1);
 			if (setFrontendInitializerMethod == null) {
 				return false;
