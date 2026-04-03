@@ -20,6 +20,19 @@ public class ReflectionUtils {
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
+	public static <T> T getStaticFieldValue(Class<?> target, String name) throws IllegalArgumentException, IllegalAccessException {
+		Class<?> clazz = target;
+		do {
+			for (Field field : clazz.getDeclaredFields()) {
+				if (field.getName().equals(name)) {
+					return (T) setAccessible(field).get(null);
+				}
+			}
+		} while ((clazz = clazz.getSuperclass()) != null);
+		return null;
+	}
+
 	public static void setFieldValue(Object target, String name, Object value) throws IllegalArgumentException, IllegalAccessException {
 		Class<?> clazz = target.getClass();
 		do {
@@ -47,6 +60,19 @@ public class ReflectionUtils {
 		} catch (Throwable e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static void setStaticFinalField(Class<?> clazz, Object value, String... fieldnames) {
+		RuntimeException exception = null;
+		for (String fieldname : fieldnames) {
+			try {
+				setStaticFinalField(clazz, fieldname, value);
+				return;
+			} catch (RuntimeException e) {
+				exception = e;
+			}
+		}
+		throw new RuntimeException("Unable to set static field in " + clazz.getName(), exception);
 	}
 
 }

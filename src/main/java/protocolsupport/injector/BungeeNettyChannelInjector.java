@@ -1,5 +1,6 @@
 package protocolsupport.injector;
 
+import java.lang.reflect.Method;
 import java.util.Map.Entry;
 
 import io.netty.buffer.ByteBuf;
@@ -33,7 +34,41 @@ public class BungeeNettyChannelInjector extends MessageToByteEncoder<ByteBuf> {
 	}
 
 	public static void inject() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-		ReflectionUtils.setStaticFinalField(PipelineUtils.class, "framePrepender", new BungeeNettyChannelInjector());
+		try {
+			ReflectionUtils.setStaticFinalField(
+				PipelineUtils.class,
+				new BungeeNettyChannelInjector(),
+				"framePrepender",
+				"FRAME_PREPENDER",
+				"frameEncoder",
+				"FRAME_ENCODER"
+			);
+		} catch (RuntimeException e) {
+			Object originalChildInitializer = ReflectionUtils.getStaticFieldValue(PipelineUtils.class, "SERVER_CHILD");
+			if (originalChildInitializer == null) {
+				throw e;
+			}
+			ReflectionUtils.setStaticFinalField(PipelineUtils.class, "SERVER_CHILD", new ServerChildInjectingInitializer(originalChildInitializer));
+		}
+	}
+
+	private static final class ServerChildInjectingInitializer extends io.netty.channel.ChannelInitializer<Channel> {
+
+		private final Object originalInitializer;
+
+		private ServerChildInjectingInitializer(Object originalInitializer) {
+			this.originalInitializer = originalInitializer;
+		}
+
+		@Override
+		protected void initChannel(Channel channel) throws Exception {
+			Method originalInitChannel = ReflectionUtils.setAccessible(
+				io.netty.channel.ChannelInitializer.class.getDeclaredMethod("initChannel", Channel.class)
+			);
+			originalInitChannel.invoke(originalInitializer, channel);
+			channel.pipeline().addFirst(new ChannelInitializerEntryPoint());
+		}
+
 	}
 
 	@Override
