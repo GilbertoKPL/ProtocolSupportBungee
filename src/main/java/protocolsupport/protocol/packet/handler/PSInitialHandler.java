@@ -43,6 +43,7 @@ import net.md_5.bungee.protocol.packet.EncryptionResponse;
 import net.md_5.bungee.protocol.packet.LoginRequest;
 import protocolsupport.api.ProtocolType;
 import protocolsupport.api.ProtocolVersion;
+import protocolsupport.config.PluginConfig;
 import protocolsupport.api.events.PlayerLoginFinishEvent;
 import protocolsupport.api.events.PlayerLoginStartEvent;
 import protocolsupport.api.events.PlayerProfileCompleteEvent;
@@ -339,11 +340,18 @@ public class PSInitialHandler extends InitialHandler {
 
 			channel.getHandle().pipeline().get(HandlerBoss.class).setHandler(new UpstreamBridge(BungeeCord.getInstance(), userCon));
 
-			ServerInfo server;
+			ServerInfo server = null;
 			if (BungeeCord.getInstance().getReconnectHandler() != null) {
 				server = BungeeCord.getInstance().getReconnectHandler().getServer(userCon);
-			} else {
+			}
+			if (server == null) {
 				server = AbstractReconnectHandler.getForcedHost(PSInitialHandler.this);
+			}
+			if (server == null) {
+				String versionServerName = PluginConfig.getServerForVersion(connection.getVersion());
+				if (versionServerName != null) {
+					server = BungeeCord.getInstance().getServerInfo(versionServerName);
+				}
 			}
 			if (server == null) {
 				server = BungeeCord.getInstance().getServerInfo(getListener().getDefaultServer());

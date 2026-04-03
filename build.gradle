@@ -8,8 +8,13 @@ version = '1.16.3-1'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(8)
+		languageVersion = JavaLanguageVersion.of(21)
 	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	sourceCompatibility = '8'
+	targetCompatibility = '8'
 }
 
 repositories {
