@@ -1,111 +1,66 @@
-buildscript {
-	repositories {
-		mavenCentral()
-		maven {
-			url 'https://jitpack.io'
-		}
-	}
-	dependencies {
-		classpath group: 'com.github.HurricaneGamesOrg', name: 'ManualGradleDependencySupplier', version: '1e9e953fb4'
-	}
-}
-
 plugins {
-	id 'com.github.johnrengelman.shadow' version '5.0.0'
 	id 'java'
+	id 'com.gradleup.shadow' version '9.4.1'
 }
 
-apply plugin: 'org.hurricanegames.ManualGradleDependencySupplier'
+group = 'protocolsupport'
+version = '1.16.3-1'
 
-
-defaultTasks 'build'
-
-
-group 'protocolsupport'
-version '1.16.3-1'
-
-
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.Files
-
-import org.hurricanegames.manualgradledependencysupplier.DependencySupplier
-import org.hurricanegames.manualgradledependencysupplier.DownloadDependencySupplier
-import org.hurricanegames.manualgradledependencysupplier.ManualGradleDependencySupplier
-
-
-Path projectDirectoryPath = projectDir.toPath().toAbsolutePath()
-
-
-sourceCompatibility = JavaVersion.VERSION_1_8
-
-sourceSets {
-	main {
-		java {
-			srcDirs = ['src']
-		}
-		resources {
-			srcDirs = ['resources']
-		}
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(8)
 	}
 }
 
 repositories {
 	mavenCentral()
+	maven {
+		url = uri('https://jitpack.io')
+	}
 }
 
 dependencies {
-	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
-	compile group: 'it.unimi.dsi', name: 'fastutil', version: '8.2.2'
+	implementation 'org.apache.commons:commons-lang3:3.14.0'
+	implementation 'it.unimi.dsi:fastutil:8.5.13'
 
-	compileOnly ManualGradleDependencySupplier.supplyDependecies(
-		projectDirectoryPath.resolve('libraries_runtime'),
-		[
-			new DownloadDependencySupplier(
-				'bungeecord-1.16.4-1.jar',
-				new URL('https://papermc.io/api/v1/travertine/1.16/163/download')
-			)
-		],
-		true
-	)
+	compileOnly("net.md-5:bungeecord-api:1.21-R0.4")
 }
 
-compileJava {
-	doFirst {
-	    classpath -= configurations.compileOnly
-	    classpath += configurations.compileOnly
-	}
-
+tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8'
 	options.incremental = false
 }
 
+tasks.shadowJar {
+	archiveClassifier.set('')
 
-shadowJar {
-	from sourceSets.main.java.srcDirs
-	from 'LICENSE'
-
-	archiveName = jar.archiveName
+	from(sourceSets.main.output)
+	from('LICENSE')
 
 	exclude 'META-INF/**'
+
 	relocate 'org.apache', 'protocolsupport.libs.org.apache'
 	relocate 'it.unimi.dsi.fastutil', 'protocolsupport.libs.it.unimi.dsi.fastutil'
 
 	minimize()
 }
 
+tasks.register('copyFinalJarToTarget') {
+	dependsOn tasks.shadowJar
 
-task copyFinalJarToTarget(type: DefaultTask) {doLast{
-	Path targetJarDirectory = projectDirectoryPath.resolve("target")
-	Files.createDirectories(targetJarDirectory)
-	Files.copy(
-		shadowJar.archivePath.toPath().toAbsolutePath(),
-		targetJarDirectory.resolve(shadowJar.baseName + '.jar'),
-		java.nio.file.StandardCopyOption.REPLACE_EXISTING
-	)
-}}
+	doLast {
+		def targetDir = file("$projectDir/target")
+		targetDir.mkdirs()
 
+		copy {
+			from tasks.shadowJar.get().archiveFile
+			into targetDir
+			rename { "${project.name}.jar" }
+		}
+	}
+}
 
-jar.enabled = false
-jar.finalizedBy(shadowJar)
-shadowJar.finalizedBy(copyFinalJarToTarget)
+tasks.build {
+	dependsOn tasks.shadowJar
+	finalizedBy tasks.copyFinalJarToTarget
+}
