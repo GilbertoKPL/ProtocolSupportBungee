@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import javax.crypto.SecretKey;
 
 import com.google.common.base.Preconditions;
+import com.mojang.authlib.properties.Property;
 
 import net.md_5.bungee.BungeeCord;
 import net.md_5.bungee.EncryptionUtil;
@@ -290,8 +291,8 @@ public class PSInitialHandler extends InitialHandler {
 			getName(), getUUID(),
 			profile.getProperties().values().stream()
 			.flatMap(Collection::stream)
-			.map(psprop -> new LoginResult.Property(psprop.getName(), psprop.getValue(), psprop.getSignature()))
-			.collect(Collectors.toList()).toArray(new LoginResult.Property[0])
+			.map(psprop -> new Property(psprop.getName(), psprop.getValue(), psprop.getSignature()))
+			.collect(Collectors.toList()).toArray(new Property[0])
 		);
 
 		ProxiedPlayer oldName = BungeeCord.getInstance().getPlayer(getName());
