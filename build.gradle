@@ -8,15 +8,14 @@ version = '1.16.3-1'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(8)
+		languageVersion = JavaLanguageVersion.of(21)
 	}
 }
 
 repositories {
 	mavenCentral()
 	maven {
-		url = uri('https://raw.githubusercontent.com/gephi/gephi/mvn-thirdparty-repo/')
-		url = uri('https://repo.glaremasters.me/repository/public/')
+		url = uri('https://jitpack.io')
 	}
 }
 
@@ -24,13 +23,7 @@ dependencies {
 	implementation 'org.apache.commons:commons-lang3:3.14.0'
 	implementation 'it.unimi.dsi:fastutil:8.5.13'
 
-	compileOnly("net.md-5:bungeecord-api:1.21-R0.4")
-	compileOnly("net.md-5:bungeecord-protocol:1.21-R0.4")
-	compileOnly("net.md-5:bungeecord-native:1.21-R0.4")
-	compileOnly("net.md-5:bungeecord-chat:1.21-R0.4")
-	compileOnly("net.md-5:bungeecord-protocol:1.21-R0.4")
-	compileOnly("net.md-5:bungeecord-query:1.21-R0.4")
-	compileOnly("net.md-5:bungeecord-config:1.21-R0.4")
+	compileOnly fileTree(dir: 'libraries_runtime', include: ['*.jar'])
 }
 
 tasks.withType(JavaCompile).configureEach {
