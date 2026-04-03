@@ -2,10 +2,12 @@ package protocolsupport.injector;
 
 import java.util.Map.Entry;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.handler.codec.haproxy.HAProxyMessageDecoder;
 import net.md_5.bungee.BungeeCord;
 import net.md_5.bungee.ServerConnector;
@@ -14,7 +16,6 @@ import net.md_5.bungee.netty.ChannelWrapper;
 import net.md_5.bungee.netty.HandlerBoss;
 import net.md_5.bungee.netty.PacketHandler;
 import net.md_5.bungee.netty.PipelineUtils;
-import net.md_5.bungee.protocol.Varint21LengthFieldPrepender;
 import protocolsupport.protocol.ConnectionImpl;
 import protocolsupport.protocol.packet.handler.PSInitialHandler;
 import protocolsupport.protocol.pipeline.ChannelHandlers;
@@ -26,7 +27,7 @@ import protocolsupport.utils.ReflectionUtils;
 import protocolsupport.utils.netty.ChannelInitializer;
 
 //yep, thats our entry point, a single static field
-public class BungeeNettyChannelInjector extends Varint21LengthFieldPrepender {
+public class BungeeNettyChannelInjector extends MessageToByteEncoder<ByteBuf> {
 
 	private BungeeNettyChannelInjector() {
 	}
@@ -37,8 +38,25 @@ public class BungeeNettyChannelInjector extends Varint21LengthFieldPrepender {
 
 	@Override
 	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-		super.handlerAdded(ctx);
 		ctx.channel().pipeline().addFirst(new ChannelInitializerEntryPoint());
+	}
+
+	@Override
+	protected void encode(ChannelHandlerContext ctx, ByteBuf msg, ByteBuf out) throws Exception {
+		int bodyLen = msg.readableBytes();
+		writeVarInt(out, bodyLen);
+		out.writeBytes(msg, msg.readerIndex(), bodyLen);
+	}
+
+	private static void writeVarInt(ByteBuf out, int value) {
+		do {
+			byte temp = (byte) (value & 0b0111_1111);
+			value >>>= 7;
+			if (value != 0) {
+				temp |= 0b1000_0000;
+			}
+			out.writeByte(temp);
+		} while (value != 0);
 	}
 
 	private static class ChannelInitializerEntryPoint extends ChannelInitializer {
