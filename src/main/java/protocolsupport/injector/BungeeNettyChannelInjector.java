@@ -33,6 +33,7 @@ import protocolsupport.utils.ReflectionUtils;
 import protocolsupport.utils.netty.ChannelInitializer;
 
 //yep, thats our entry point, a single static field
+@ChannelHandler.Sharable
 public class BungeeNettyChannelInjector extends MessageToByteEncoder<ByteBuf> {
 
 	private BungeeNettyChannelInjector() {
