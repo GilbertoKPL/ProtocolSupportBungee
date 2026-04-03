@@ -1,6 +1,8 @@
 package protocolsupport.injector;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.Map.Entry;
 
 import io.netty.buffer.ByteBuf;
@@ -34,22 +36,40 @@ public class BungeeNettyChannelInjector extends MessageToByteEncoder<ByteBuf> {
 	}
 
 	public static void inject() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-		try {
-			ReflectionUtils.setStaticFinalField(
-				PipelineUtils.class,
-				new BungeeNettyChannelInjector(),
-				"framePrepender",
-				"FRAME_PREPENDER",
-				"frameEncoder",
-				"FRAME_ENCODER"
-			);
-		} catch (RuntimeException e) {
-			Object originalChildInitializer = ReflectionUtils.getStaticFieldValue(PipelineUtils.class, "SERVER_CHILD");
-			if (originalChildInitializer == null) {
-				throw e;
-			}
-			ReflectionUtils.setStaticFinalField(PipelineUtils.class, "SERVER_CHILD", new ServerChildInjectingInitializer(originalChildInitializer));
+		if (ReflectionUtils.trySetStaticFinalField(
+			PipelineUtils.class,
+			new BungeeNettyChannelInjector(),
+			"framePrepender",
+			"FRAME_PREPENDER",
+			"frameEncoder",
+			"FRAME_ENCODER"
+		)) {
+			return;
 		}
+		if (tryInjectViaChildInitializerField("SERVER_CHILD", "CHILD_HANDLER", "SERVER_CHILD_HANDLER")) {
+			return;
+		}
+		for (Field field : PipelineUtils.class.getDeclaredFields()) {
+			if (Modifier.isStatic(field.getModifiers()) && io.netty.channel.ChannelInitializer.class.isAssignableFrom(field.getType())) {
+				Object originalChildInitializer = ReflectionUtils.setAccessible(field).get(null);
+				if (originalChildInitializer != null) {
+					ReflectionUtils.setStaticFinalField(field, new ServerChildInjectingInitializer(originalChildInitializer));
+					return;
+				}
+			}
+		}
+		throw new RuntimeException("Unable to inject into PipelineUtils: no supported frame prepender or child initializer field found");
+	}
+
+	private static boolean tryInjectViaChildInitializerField(String... fieldNames) throws IllegalArgumentException, IllegalAccessException {
+		for (String fieldName : fieldNames) {
+			Object originalChildInitializer = ReflectionUtils.getStaticFieldValue(PipelineUtils.class, fieldName);
+			if (originalChildInitializer != null && originalChildInitializer instanceof io.netty.channel.ChannelInitializer) {
+				ReflectionUtils.setStaticFinalField(PipelineUtils.class, fieldName, new ServerChildInjectingInitializer(originalChildInitializer));
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static final class ServerChildInjectingInitializer extends io.netty.channel.ChannelInitializer<Channel> {

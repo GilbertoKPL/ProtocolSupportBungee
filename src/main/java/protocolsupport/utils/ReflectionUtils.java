@@ -52,7 +52,14 @@ public class ReflectionUtils {
 
 	public static void setStaticFinalField(Class<?> clazz, String fieldname, Object value) {
 		try {
-			Field field = setAccessible(clazz.getDeclaredField(fieldname));
+			setStaticFinalField(setAccessible(clazz.getDeclaredField(fieldname)), value);
+		} catch (Throwable e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static void setStaticFinalField(Field field, Object value) {
+		try {
 			((MethodHandles.Lookup) setAccessible(MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP")).get(null))
 			.findSetter(Field.class, "modifiers", int.class)
 			.invokeExact(field, field.getModifiers() & ~Modifier.FINAL);
@@ -62,17 +69,21 @@ public class ReflectionUtils {
 		}
 	}
 
-	public static void setStaticFinalField(Class<?> clazz, Object value, String... fieldnames) {
-		RuntimeException exception = null;
+	public static boolean trySetStaticFinalField(Class<?> clazz, Object value, String... fieldnames) {
 		for (String fieldname : fieldnames) {
 			try {
 				setStaticFinalField(clazz, fieldname, value);
-				return;
+				return true;
 			} catch (RuntimeException e) {
-				exception = e;
 			}
 		}
-		throw new RuntimeException("Unable to set static field in " + clazz.getName(), exception);
+		return false;
+	}
+
+	public static void setStaticFinalField(Class<?> clazz, Object value, String... fieldnames) {
+		if (!trySetStaticFinalField(clazz, value, fieldnames)) {
+			throw new RuntimeException("Unable to set static field in " + clazz.getName());
+		}
 	}
 
 }
