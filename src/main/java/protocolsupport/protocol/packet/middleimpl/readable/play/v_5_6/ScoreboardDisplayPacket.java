@@ -28,7 +28,7 @@ public class ScoreboardDisplayPacket extends LegacyDefinedReadableMiddlePacket {
 
 	@Override
 	public Collection<PacketWrapper> toNative() {
-		return Collections.singletonList(new PacketWrapper(new ScoreboardDisplay(position, name), Unpooled.wrappedBuffer(readbytes)));
+		return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(new ScoreboardDisplay(position, name), Unpooled.wrappedBuffer(readbytes)));
 	}
 
 }

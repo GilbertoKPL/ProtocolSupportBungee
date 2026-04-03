@@ -46,7 +46,7 @@ public abstract class LegacyAbstractFromServerPacketDecoder extends MinecraftDec
 			packets.addAll(transformer.toNative());
 		} else {
 			buf.resetReaderIndex();
-			packets.add(new PacketWrapper(null, buf.copy()));
+			packets.add(protocolsupport.protocol.utils.PacketWrapperFactory.create(null, buf.copy()));
 		}
 	}
 

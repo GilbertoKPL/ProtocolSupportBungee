@@ -34,8 +34,8 @@ public class LoginHandshakePacket extends LegacyDefinedReadableMiddlePacket {
 	@Override
 	public Collection<PacketWrapper> toNative() {
 		return Arrays.asList(
-			new PacketWrapper(new Handshake(ProtocolVersionsHelper.LATEST_PC.getId(), host, port, 2), Unpooled.wrappedBuffer(readbytes)),
-			new PacketWrapper(new LoginRequest(username), Unpooled.EMPTY_BUFFER)
+			protocolsupport.protocol.utils.PacketWrapperFactory.create(new Handshake(ProtocolVersionsHelper.LATEST_PC.getId(), host, port, 2), Unpooled.wrappedBuffer(readbytes)),
+			protocolsupport.protocol.utils.PacketWrapperFactory.create(new LoginRequest(username), Unpooled.EMPTY_BUFFER)
 		);
 	}
 

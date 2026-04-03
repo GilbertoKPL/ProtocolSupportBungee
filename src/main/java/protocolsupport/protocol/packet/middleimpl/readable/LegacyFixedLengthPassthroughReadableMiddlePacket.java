@@ -28,7 +28,7 @@ public abstract class LegacyFixedLengthPassthroughReadableMiddlePacket extends R
 
 	@Override
 	public Collection<PacketWrapper> toNative() {
-		return Collections.singletonList(new PacketWrapper(null, Unpooled.wrappedBuffer(bytes)));
+		return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(null, Unpooled.wrappedBuffer(bytes)));
 	}
 
 }

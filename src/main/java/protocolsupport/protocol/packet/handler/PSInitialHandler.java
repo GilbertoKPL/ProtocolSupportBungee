@@ -224,7 +224,7 @@ public class PSInitialHandler extends InitialHandler {
 		channel.addBefore(PipelineUtils.FRAME_DECODER, PipelineUtils.DECRYPT_HANDLER, new CipherDecoder(decrypt));
 		if (isFullEncryption(connection.getVersion())) {
 			BungeeCipher encrypt = EncryptionUtil.getCipher(true, sharedKey);
-			channel.addBefore(PipelineUtils.FRAME_PREPENDER, PipelineUtils.ENCRYPT_HANDLER, new CipherEncoder(encrypt));
+			channel.addBefore(protocolsupport.protocol.utils.PipelineNames.FRAME_PREPENDER, PipelineUtils.ENCRYPT_HANDLER, new CipherEncoder(encrypt));
 		}
 		String encName = URLEncoder.encode(getName(), "UTF-8");
 		MessageDigest sha = MessageDigest.getInstance("SHA-1");
@@ -238,7 +238,7 @@ public class PSInitialHandler extends InitialHandler {
 			@Override
 			public void done(String result, Throwable error) {
 				if (error == null) {
-					LoginResult obj = BungeeCord.getInstance().gson.fromJson(result, LoginResult.class);
+					LoginResult obj = new com.google.gson.Gson().fromJson(result, LoginResult.class);
 					if ((obj != null) && (obj.getId() != null)) {
 						loginProfile = obj;
 						updateUsername(obj.getName(), true);
@@ -290,8 +290,8 @@ public class PSInitialHandler extends InitialHandler {
 			getName(), getUUID(),
 			profile.getProperties().values().stream()
 			.flatMap(Collection::stream)
-			.map(psprop -> new LoginResult.Property(psprop.getName(), psprop.getValue(), psprop.getSignature()))
-			.collect(Collectors.toList()).toArray(new LoginResult.Property[0])
+			.map(psprop -> new net.md_5.bungee.protocol.Property(psprop.getName(), psprop.getValue(), psprop.getSignature()))
+			.collect(Collectors.toList()).toArray(new net.md_5.bungee.protocol.Property[0])
 		);
 
 		ProxiedPlayer oldName = BungeeCord.getInstance().getPlayer(getName());
@@ -338,7 +338,6 @@ public class PSInitialHandler extends InitialHandler {
 			}
 
 			channel.getHandle().pipeline().get(HandlerBoss.class).setHandler(new UpstreamBridge(BungeeCord.getInstance(), userCon));
-			BungeeCord.getInstance().getPluginManager().callEvent(new PostLoginEvent(userCon));
 
 			ServerInfo server;
 			if (BungeeCord.getInstance().getReconnectHandler() != null) {
@@ -349,7 +348,33 @@ public class PSInitialHandler extends InitialHandler {
 			if (server == null) {
 				server = BungeeCord.getInstance().getServerInfo(getListener().getDefaultServer());
 			}
+			firePostLoginEvent(userCon, server);
 			userCon.connect(server, null, true);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	protected void firePostLoginEvent(UserConnection userCon, ServerInfo server) {
+		try {
+			for (java.lang.reflect.Constructor<?> constructor : PostLoginEvent.class.getConstructors()) {
+				Class<?>[] params = constructor.getParameterTypes();
+				if (params.length == 1) {
+					BungeeCord.getInstance().getPluginManager().callEvent((PostLoginEvent) constructor.newInstance(userCon));
+					return;
+				}
+				if (params.length == 3) {
+					Callback<PostLoginEvent> callback = new Callback<PostLoginEvent>() {
+						@Override
+						public void done(PostLoginEvent result, Throwable error) {
+						}
+					};
+					BungeeCord.getInstance().getPluginManager().callEvent((PostLoginEvent) constructor.newInstance(userCon, server, callback));
+					return;
+				}
+			}
+		throw new IllegalStateException("Unsupported PostLoginEvent constructor signature");
+		} catch (ReflectiveOperationException ex) {
+			throw new RuntimeException("Unable to fire PostLoginEvent", ex);
 		}
 	}
 

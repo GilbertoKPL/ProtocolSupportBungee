@@ -30,7 +30,7 @@ public class PlayerListItemPacket extends LegacyDefinedReadableMiddlePacket {
 		action = add ? Action.ADD_PLAYER : Action.REMOVE_PLAYER;
 		Item item = new Item();
 		item.setUsername(username);
-		item.setDisplayName(username);
+		item.setDisplayName(new net.md_5.bungee.api.chat.TextComponent(username));
 		item.setGamemode(0);
 		item.setPing(ping);
 		items = new Item[] { item };
@@ -41,7 +41,7 @@ public class PlayerListItemPacket extends LegacyDefinedReadableMiddlePacket {
 		PlayerListItem packet = new PlayerListItem();
 		packet.setAction(action);
 		packet.setItems(items);
-		return Collections.singletonList(new PacketWrapper(packet, Unpooled.wrappedBuffer(readbytes)));
+		return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(packet, Unpooled.wrappedBuffer(readbytes)));
 	}
 
 }

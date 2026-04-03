@@ -29,7 +29,7 @@ public class ClientCommandPacket extends LegacyDefinedReadableMiddlePacket {
 			try {
 				Class<?> clazz = Class.forName("net.md_5.bungee.protocol.packet.ClientStatus");
 				DefinedPacket packet = (DefinedPacket) clazz.getDeclaredConstructor(byte.class).newInstance((byte) status);
-				return Collections.singletonList(new PacketWrapper(packet, Unpooled.wrappedBuffer(readbytes)));
+				return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(packet, Unpooled.wrappedBuffer(readbytes)));
 			} catch (ReflectiveOperationException ignored) {
 				return Collections.emptyList();
 			}

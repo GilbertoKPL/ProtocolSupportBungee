@@ -36,7 +36,7 @@ public class ClientSettingsPacket extends LegacyDefinedReadableMiddlePacket {
 
 	@Override
 	public Collection<PacketWrapper> toNative() {
-		return Collections.singletonList(new PacketWrapper(new ClientSettings(locale, viewDistance, chatFlags, chatColours, difficulty, (byte) 255, 1), Unpooled.wrappedBuffer(readbytes)));
+		return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(new ClientSettings(locale, viewDistance, chatFlags, chatColours, difficulty, (byte) 255, 1), Unpooled.wrappedBuffer(readbytes)));
 	}
 
 }
