@@ -6,8 +6,6 @@ import java.util.Collection;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.md_5.bungee.protocol.PacketWrapper;
-import net.md_5.bungee.protocol.packet.Login;
-import net.md_5.bungee.protocol.packet.LoginSuccess;
 import protocolsupport.protocol.packet.id.LegacyPacketId;
 import protocolsupport.protocol.packet.middleimpl.readable.LegacyDefinedReadableMiddlePacket;
 import protocolsupport.protocol.serializer.StringSerializer;
@@ -44,7 +42,7 @@ public class StartGamePacket extends LegacyDefinedReadableMiddlePacket {
 		return Arrays.asList(
 			protocolsupport.protocol.utils.PacketWrapperFactory.create(protocolsupport.protocol.utils.LegacyPacketFactory.createLoginSuccess(), Unpooled.EMPTY_BUFFER),
 			protocolsupport.protocol.utils.PacketWrapperFactory.create(
-				new Login(entityId, hardcode, (short) gamemode, (short) gamemode, null, null, Integer.valueOf(dimension), null, 0, (short) difficulty, (short) maxPlayers, levelType, 10, false, true, false, false),
+				protocolsupport.protocol.utils.LegacyPacketFactory.createLoginPacket(entityId, hardcode, gamemode, dimension, difficulty, maxPlayers, levelType),
 				Unpooled.wrappedBuffer(readbytes)
 			)
 		);

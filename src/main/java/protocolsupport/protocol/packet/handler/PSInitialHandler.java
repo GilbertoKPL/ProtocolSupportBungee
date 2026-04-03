@@ -290,8 +290,8 @@ public class PSInitialHandler extends InitialHandler {
 			getName(), getUUID(),
 			profile.getProperties().values().stream()
 			.flatMap(Collection::stream)
-			.map(psprop -> new net.md_5.bungee.protocol.Property(psprop.getName(), psprop.getValue(), psprop.getSignature()))
-			.collect(Collectors.toList()).toArray(new net.md_5.bungee.protocol.Property[0])
+			.map(psprop -> new LoginResult.Property(psprop.getName(), psprop.getValue(), psprop.getSignature()))
+			.collect(Collectors.toList()).toArray(new LoginResult.Property[0])
 		);
 
 		ProxiedPlayer oldName = BungeeCord.getInstance().getPlayer(getName());
@@ -327,7 +327,7 @@ public class PSInitialHandler extends InitialHandler {
 				userCon.setCompressionThreshold(BungeeCord.getInstance().config.getCompressionThreshold());
 			}
 			userCon.init();
-			unsafe().sendPacket(new LoginSuccess(getUniqueId(), getName()));
+			unsafe().sendPacket(new LoginSuccess(getUniqueId(), getName(), loginProfile.getProperties()));
 			channel.setProtocol(Protocol.GAME);
 
 			PlayerLoginFinishEvent loginFinishEvent = new PlayerLoginFinishEvent(connection);
