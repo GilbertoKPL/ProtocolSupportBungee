@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 import javax.crypto.SecretKey;
 
 import com.google.common.base.Preconditions;
-import net.md_5.bungee.protocol.data.Property;
 
 import net.md_5.bungee.BungeeCord;
 import net.md_5.bungee.EncryptionUtil;
@@ -42,7 +41,6 @@ import net.md_5.bungee.protocol.Protocol;
 import net.md_5.bungee.protocol.packet.EncryptionRequest;
 import net.md_5.bungee.protocol.packet.EncryptionResponse;
 import net.md_5.bungee.protocol.packet.LoginRequest;
-import net.md_5.bungee.protocol.packet.LoginSuccess;
 import protocolsupport.api.ProtocolType;
 import protocolsupport.api.ProtocolVersion;
 import protocolsupport.api.events.PlayerLoginFinishEvent;
@@ -52,6 +50,7 @@ import protocolsupport.api.utils.Profile;
 import protocolsupport.api.utils.ProfileProperty;
 import protocolsupport.protocol.ConnectionImpl;
 import protocolsupport.protocol.utils.GameProfile;
+import protocolsupport.protocol.utils.LegacyPacketFactory;
 
 public class PSInitialHandler extends InitialHandler {
 
@@ -202,7 +201,7 @@ public class PSInitialHandler extends InitialHandler {
 			case PC: {
 				if (isOnlineMode()) {
 					state = LoginState.KEY;
-					unsafe().sendPacket((request = EncryptionUtil.encryptRequest()));
+					sendPacketCompat((request = EncryptionUtil.encryptRequest()));
 				} else {
 					offlineuuid = Profile.generateOfflineModeUUID(getName());
 					updateUUID(offlineuuid, true);
@@ -291,8 +290,8 @@ public class PSInitialHandler extends InitialHandler {
 			getName(), getUUID(),
 			profile.getProperties().values().stream()
 			.flatMap(Collection::stream)
-			.map(psprop -> new Property(psprop.getName(), psprop.getValue(), psprop.getSignature()))
-			.collect(Collectors.toList()).toArray(new Property[0])
+			.map(psprop -> new LoginResult.Property(psprop.getName(), psprop.getValue(), psprop.getSignature()))
+			.collect(Collectors.toList()).toArray(new LoginResult.Property[0])
 		);
 
 		ProxiedPlayer oldName = BungeeCord.getInstance().getPlayer(getName());
@@ -328,7 +327,7 @@ public class PSInitialHandler extends InitialHandler {
 				userCon.setCompressionThreshold(BungeeCord.getInstance().config.getCompressionThreshold());
 			}
 			userCon.init();
-			unsafe().sendPacket(new LoginSuccess(getUniqueId(), getName(), loginProfile.getProperties()));
+			sendPacketCompat(LegacyPacketFactory.createLoginSuccess(getUniqueId(), getName(), loginProfile.getProperties()));
 			channel.setProtocol(Protocol.GAME);
 
 			PlayerLoginFinishEvent loginFinishEvent = new PlayerLoginFinishEvent(connection);
@@ -377,6 +376,30 @@ public class PSInitialHandler extends InitialHandler {
 		} catch (ReflectiveOperationException ex) {
 			throw new RuntimeException("Unable to fire PostLoginEvent", ex);
 		}
+	}
+
+	protected void sendPacketCompat(Object packet) {
+		try {
+			java.lang.reflect.Method unsafeMethod = null;
+			Class<?> source = getClass();
+			while ((source != null) && (unsafeMethod == null)) {
+				try {
+					unsafeMethod = source.getDeclaredMethod("unsafe");
+				} catch (NoSuchMethodException ignored) {
+					source = source.getSuperclass();
+				}
+			}
+			if (unsafeMethod == null) {
+				throw new NoSuchMethodException("unsafe");
+			}
+			unsafeMethod.setAccessible(true);
+			Object unsafe = unsafeMethod.invoke(this);
+			java.lang.reflect.Method sendPacketMethod = unsafe.getClass().getMethod("sendPacket", Object.class);
+			sendPacketMethod.invoke(unsafe, packet);
+			return;
+		} catch (ReflectiveOperationException ignored) {
+		}
+		channel.write(packet);
 	}
 
 	public enum LoginState {
