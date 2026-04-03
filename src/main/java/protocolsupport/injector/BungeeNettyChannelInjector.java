@@ -1,6 +1,8 @@
 package protocolsupport.injector;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Map.Entry;
@@ -13,6 +15,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.handler.codec.haproxy.HAProxyMessageDecoder;
 import net.md_5.bungee.BungeeCord;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.ServerConnector;
 import net.md_5.bungee.connection.InitialHandler;
 import net.md_5.bungee.netty.ChannelWrapper;
@@ -36,6 +39,9 @@ public class BungeeNettyChannelInjector extends MessageToByteEncoder<ByteBuf> {
 	}
 
 	public static void inject() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+		if (tryInjectViaModernUnsafeFrontendInitializer()) {
+			return;
+		}
 		if (ReflectionUtils.trySetStaticFinalField(
 			PipelineUtils.class,
 			new BungeeNettyChannelInjector(),
@@ -61,6 +67,107 @@ public class BungeeNettyChannelInjector extends MessageToByteEncoder<ByteBuf> {
 		throw new RuntimeException("Unable to inject into PipelineUtils: no supported frame prepender or child initializer field found");
 	}
 
+	private static boolean tryInjectViaModernUnsafeFrontendInitializer() {
+		try {
+			Object unsafe = ProxyServer.getInstance().unsafe();
+			Method setFrontendInitializerMethod = findMethod(unsafe.getClass(), "setFrontendChannelInitializer", 1);
+			if (setFrontendInitializerMethod == null) {
+				return false;
+			}
+			Class<?> initializerType = setFrontendInitializerMethod.getParameterTypes()[0];
+			Method getFrontendInitializerMethod = findMethod(unsafe.getClass(), "getFrontendChannelInitializer", 0);
+			Object originalInitializer = (getFrontendInitializerMethod != null) ? getFrontendInitializerMethod.invoke(unsafe) : null;
+			Object wrappedInitializer = createWrappedFrontendInitializer(initializerType, originalInitializer);
+			setFrontendInitializerMethod.invoke(unsafe, wrappedInitializer);
+			return true;
+		} catch (Throwable ignored) {
+			return false;
+		}
+	}
+
+	private static Object createWrappedFrontendInitializer(Class<?> initializerType, Object originalInitializer) {
+		if (io.netty.channel.ChannelInitializer.class.isAssignableFrom(initializerType)) {
+			return new ServerChildInjectingInitializer(originalInitializer);
+		}
+		if (initializerType.isInterface()) {
+			InvocationHandler invoker = (proxy, method, args) -> {
+				if (method.getDeclaringClass() == Object.class) {
+					return method.invoke(proxy, args);
+				}
+				Channel channel = (args != null && (args.length > 0) && (args[0] instanceof Channel)) ? (Channel) args[0] : null;
+				if (channel != null) {
+					invokeOriginalInitializer(originalInitializer, method, channel);
+					channel.pipeline().addFirst(new ChannelInitializerEntryPoint());
+				}
+				return getDefaultValue(method.getReturnType());
+			};
+			return Proxy.newProxyInstance(initializerType.getClassLoader(), new Class<?>[] { initializerType }, invoker);
+		}
+		throw new RuntimeException("Unsupported frontend initializer type: " + initializerType.getName());
+	}
+
+	private static void invokeOriginalInitializer(Object originalInitializer, Method invocationMethod, Channel channel) throws Exception {
+		if (originalInitializer == null) {
+			return;
+		}
+		try {
+			invocationMethod.invoke(originalInitializer, channel);
+			return;
+		} catch (IllegalArgumentException ignored) {
+		}
+		for (Method method : originalInitializer.getClass().getMethods()) {
+			if ((method.getParameterCount() == 1) && Channel.class.isAssignableFrom(method.getParameterTypes()[0])) {
+				ReflectionUtils.setAccessible(method).invoke(originalInitializer, channel);
+				return;
+			}
+		}
+	}
+
+	private static Object getDefaultValue(Class<?> returnType) {
+		if ((returnType == void.class) || (returnType == Void.class)) {
+			return null;
+		}
+		if (returnType == boolean.class) {
+			return false;
+		}
+		if (returnType == byte.class) {
+			return (byte) 0;
+		}
+		if (returnType == short.class) {
+			return (short) 0;
+		}
+		if (returnType == int.class) {
+			return 0;
+		}
+		if (returnType == long.class) {
+			return 0L;
+		}
+		if (returnType == float.class) {
+			return 0f;
+		}
+		if (returnType == double.class) {
+			return 0d;
+		}
+		if (returnType == char.class) {
+			return (char) 0;
+		}
+		return null;
+	}
+
+	private static Method findMethod(Class<?> sourceClass, String name, int parameterCount) {
+		for (Method method : sourceClass.getMethods()) {
+			if (method.getName().equals(name) && (method.getParameterCount() == parameterCount)) {
+				return method;
+			}
+		}
+		for (Method method : sourceClass.getDeclaredMethods()) {
+			if (method.getName().equals(name) && (method.getParameterCount() == parameterCount)) {
+				return ReflectionUtils.setAccessible(method);
+			}
+		}
+		return null;
+	}
+
 	private static boolean tryInjectViaChildInitializerField(String... fieldNames) throws IllegalArgumentException, IllegalAccessException {
 		for (String fieldName : fieldNames) {
 			Object originalChildInitializer = ReflectionUtils.getStaticFieldValue(PipelineUtils.class, fieldName);
@@ -82,10 +189,12 @@ public class BungeeNettyChannelInjector extends MessageToByteEncoder<ByteBuf> {
 
 		@Override
 		protected void initChannel(Channel channel) throws Exception {
-			Method originalInitChannel = ReflectionUtils.setAccessible(
-				io.netty.channel.ChannelInitializer.class.getDeclaredMethod("initChannel", Channel.class)
-			);
-			originalInitChannel.invoke(originalInitializer, channel);
+			if (originalInitializer != null) {
+				Method originalInitChannel = ReflectionUtils.setAccessible(
+					io.netty.channel.ChannelInitializer.class.getDeclaredMethod("initChannel", Channel.class)
+				);
+				originalInitChannel.invoke(originalInitializer, channel);
+			}
 			channel.pipeline().addFirst(new ChannelInitializerEntryPoint());
 		}
 
