@@ -2,7 +2,6 @@ package protocolsupport.protocol.pipeline.version.v_1_4;
 
 import net.md_5.bungee.protocol.packet.Chat;
 import net.md_5.bungee.protocol.packet.ClientSettings;
-import net.md_5.bungee.protocol.packet.ClientStatus;
 import net.md_5.bungee.protocol.packet.Handshake;
 import net.md_5.bungee.protocol.packet.KeepAlive;
 import net.md_5.bungee.protocol.packet.LoginRequest;
@@ -26,7 +25,7 @@ public class ToServerPacketEncoder extends AbstractPacketEncoder {
 		registry.register(KeepAlive.class, KeepAlivePacket.class);
 		registry.register(Chat.class, ToServerChatPacket.class);
 		registry.register(PluginMessage.class, PluginMessagePacket.class);
-		registry.register(ClientStatus.class, ClientCommandPacket.class);
+		registerOptional("net.md_5.bungee.protocol.packet.ClientStatus", ClientCommandPacket.class);
 		registry.register(ClientSettings.class, ClientSettingsPacket.class);
 	}
 

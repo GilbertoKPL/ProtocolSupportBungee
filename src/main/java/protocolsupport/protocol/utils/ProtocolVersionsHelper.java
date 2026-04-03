@@ -2,14 +2,14 @@ package protocolsupport.protocol.utils;
 
 import java.util.Arrays;
 
-import gnu.trove.map.hash.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import protocolsupport.api.ProtocolType;
 import protocolsupport.api.ProtocolVersion;
 
 public class ProtocolVersionsHelper {
 
-	private static final TIntObjectHashMap<ProtocolVersion> byOldProtocolId = new TIntObjectHashMap<>();
-	private static final TIntObjectHashMap<ProtocolVersion> byNewProtocolId = new TIntObjectHashMap<>();
+	private static final Int2ObjectOpenHashMap<ProtocolVersion> byOldProtocolId = new Int2ObjectOpenHashMap<>();
+	private static final Int2ObjectOpenHashMap<ProtocolVersion> byNewProtocolId = new Int2ObjectOpenHashMap<>();
 
 	public static ProtocolVersion getOldProtocolVersion(int protocolid) {
 		ProtocolVersion version = byOldProtocolId.get(protocolid);
