@@ -22,6 +22,19 @@ The preferred setup is to put ProtocolSupport to all servers behind BungeeCord
 
 ---
 
+Optional config (`plugins/ProtocolSupportBungee/config.yml`):
+
+```yaml
+encapsulation:
+  enabled-by-default: true
+  disable-for-targets:
+    - "127.0.0.1:25566"
+```
+
+If a backend target (`host:port`) is listed in `disable-for-targets`, ProtocolSupportBungee uses the old/direct backend method (without encapsulated handshake) for that target.
+
+---
+
 Jenkins: http://build.true-games.org/job/ProtocolSupportBungee/
 
 ---
