@@ -33,7 +33,14 @@ public class BungeeNettyChannelInjector extends MessageToByteEncoder<ByteBuf> {
 	}
 
 	public static void inject() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-		ReflectionUtils.setStaticFinalField(PipelineUtils.class, "framePrepender", new BungeeNettyChannelInjector());
+		ReflectionUtils.setStaticFinalField(
+			PipelineUtils.class,
+			new BungeeNettyChannelInjector(),
+			"framePrepender",
+			"FRAME_PREPENDER",
+			"frameEncoder",
+			"FRAME_ENCODER"
+		);
 	}
 
 	@Override
