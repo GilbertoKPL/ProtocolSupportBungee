@@ -26,7 +26,7 @@ public class FromClientChatPacket extends LegacyDefinedReadableMiddlePacket {
 
 	@Override
 	public Collection<PacketWrapper> toNative() {
-		return Collections.singletonList(new PacketWrapper(new Chat(message), Unpooled.wrappedBuffer(readbytes)));
+		return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(new Chat(message), Unpooled.wrappedBuffer(readbytes)));
 	}
 
 }

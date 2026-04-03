@@ -11,11 +11,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
 import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.TranslatableComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
-import net.md_5.bungee.chat.TextComponentSerializer;
-import net.md_5.bungee.chat.TranslatableComponentSerializer;
 
 public class PingSerializer {
 
@@ -23,8 +19,6 @@ public class PingSerializer {
 
 	private static final Gson chatGson = new GsonBuilder()
 	.registerTypeAdapter(BaseComponent.class, new ComponentSerializer())
-	.registerTypeAdapter(TextComponent.class, new TextComponentSerializer())
-	.registerTypeAdapter(TranslatableComponent.class, new TranslatableComponentSerializer())
 	.create();
 
 	public static ServerPing fromJson(String json) {

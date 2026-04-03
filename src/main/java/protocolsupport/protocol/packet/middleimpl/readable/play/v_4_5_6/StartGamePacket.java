@@ -42,8 +42,8 @@ public class StartGamePacket extends LegacyDefinedReadableMiddlePacket {
 	@Override
 	public Collection<PacketWrapper> toNative() {
 		return Arrays.asList(
-			new PacketWrapper(new LoginSuccess(), Unpooled.EMPTY_BUFFER),
-			new PacketWrapper(
+			protocolsupport.protocol.utils.PacketWrapperFactory.create(protocolsupport.protocol.utils.LegacyPacketFactory.createLoginSuccess(), Unpooled.EMPTY_BUFFER),
+			protocolsupport.protocol.utils.PacketWrapperFactory.create(
 				new Login(entityId, hardcode, (short) gamemode, (short) gamemode, null, null, Integer.valueOf(dimension), null, 0, (short) difficulty, (short) maxPlayers, levelType, 10, false, true, false, false),
 				Unpooled.wrappedBuffer(readbytes)
 			)

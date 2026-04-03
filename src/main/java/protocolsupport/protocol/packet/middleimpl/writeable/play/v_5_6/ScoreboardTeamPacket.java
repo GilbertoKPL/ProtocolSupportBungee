@@ -18,9 +18,9 @@ public class ScoreboardTeamPacket extends LegacySingleWriteablePacket<Team> {
 		int mode = packet.getMode();
 		data.writeByte(mode);
 		if ((mode == 0) || (mode == 2)) {
-			StringSerializer.writeShortUTF16BEString(data, packet.getDisplayName());
-			StringSerializer.writeShortUTF16BEString(data, packet.getPrefix());
-			StringSerializer.writeShortUTF16BEString(data, packet.getSuffix());
+			StringSerializer.writeShortUTF16BEString(data, asLegacyString(packet.getDisplayName()));
+			StringSerializer.writeShortUTF16BEString(data, asLegacyString(packet.getPrefix()));
+			StringSerializer.writeShortUTF16BEString(data, asLegacyString(packet.getSuffix()));
 			data.writeByte(packet.getFriendlyFire());
 		}
 		if ((mode == 0) || (mode == 3) || (mode == 4)) {
@@ -29,6 +29,13 @@ public class ScoreboardTeamPacket extends LegacySingleWriteablePacket<Team> {
 				StringSerializer.writeShortUTF16BEString(data, player);
 			}
 		}
+	}
+
+	private static String asLegacyString(Object value) {
+		if (value == null) {
+			return "";
+		}
+		return value.toString();
 	}
 
 }

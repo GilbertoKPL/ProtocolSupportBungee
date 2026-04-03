@@ -46,8 +46,8 @@ public class ScoreboardTeamPacket extends LegacyDefinedReadableMiddlePacket {
 
 	@Override
 	public Collection<PacketWrapper> toNative() {
-		return Collections.singletonList(new PacketWrapper(
-			new Team(name, mode, displayName, prefix, suffix, "always", "always", (byte) -1, friendlyFire, players), Unpooled.wrappedBuffer(readbytes)
+		return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(
+			protocolsupport.protocol.utils.LegacyPacketFactory.createTeam(name, mode, displayName, prefix, suffix, friendlyFire, players), Unpooled.wrappedBuffer(readbytes)
 		));
 	}
 

@@ -28,7 +28,7 @@ public class EncryptionResponsePacket extends LegacyDefinedReadableMiddlePacket 
 
 	@Override
 	public Collection<PacketWrapper> toNative() {
-		return Collections.singletonList(new PacketWrapper(new EncryptionResponse(sharedSecret, verifyToken), Unpooled.wrappedBuffer(readbytes)));
+		return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(new EncryptionResponse(sharedSecret, verifyToken), Unpooled.wrappedBuffer(readbytes)));
 	}
 
 }
