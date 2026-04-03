@@ -49,4 +49,17 @@ public class ReflectionUtils {
 		}
 	}
 
+	public static void setStaticFinalField(Class<?> clazz, Object value, String... fieldnames) {
+		RuntimeException exception = null;
+		for (String fieldname : fieldnames) {
+			try {
+				setStaticFinalField(clazz, fieldname, value);
+				return;
+			} catch (RuntimeException e) {
+				exception = e;
+			}
+		}
+		throw new RuntimeException("Unable to set static field in " + clazz.getName(), exception);
+	}
+
 }
