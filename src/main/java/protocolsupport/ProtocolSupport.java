@@ -1,5 +1,6 @@
 package protocolsupport;
 
+import java.lang.reflect.Method;
 import java.util.logging.Level;
 
 import net.md_5.bungee.api.ProxyServer;
@@ -21,8 +22,14 @@ public class ProtocolSupport extends Plugin {
 	@SuppressWarnings("deprecation")
 	@Override
 	public void onEnable() {
-		if (!ProxyServer.getInstance().getConfig().isDisableEntityMetadataRewrite()) {
-			getLogger().log(Level.SEVERE, "Entity metadata rewrite must be disabled in order for plugin to work");
+		try {
+			Method rewriteFlagMethod = ProxyServer.getInstance().getConfig().getClass().getMethod("isDisableEntityMetadataRewrite");
+			Object rewriteFlag = rewriteFlagMethod.invoke(ProxyServer.getInstance().getConfig());
+			if (Boolean.FALSE.equals(rewriteFlag)) {
+				getLogger().log(Level.SEVERE, "Entity metadata rewrite must be disabled in order for plugin to work");
+			}
+		} catch (ReflectiveOperationException ignored) {
+			// Config option was removed in newer BungeeCord builds.
 		}
 	}
 

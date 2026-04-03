@@ -2,8 +2,11 @@ package protocolsupport.protocol.utils;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-
+import net.md_5.bungee.protocol.packet.ClientSettings;
+import net.md_5.bungee.protocol.packet.EncryptionResponse;
 import net.md_5.bungee.protocol.packet.LoginSuccess;
+import net.md_5.bungee.protocol.packet.LoginRequest;
+import net.md_5.bungee.protocol.packet.Login;
 import net.md_5.bungee.protocol.packet.Respawn;
 import net.md_5.bungee.protocol.packet.ScoreboardObjective;
 import net.md_5.bungee.protocol.packet.ScoreboardScore;
@@ -124,6 +127,140 @@ public final class LegacyPacketFactory {
 			}
 		}
 		throw new IllegalStateException("Unable to instantiate LoginSuccess packet");
+	}
+
+	public static LoginRequest createLoginRequest(String username) {
+		for (Constructor<?> constructor : LoginRequest.class.getConstructors()) {
+			Class<?>[] params = constructor.getParameterTypes();
+			if (params.length < 1) {
+				continue;
+			}
+			try {
+				Object[] args = new Object[params.length];
+				args[0] = username;
+				for (int i = 1; i < params.length; i++) {
+					args[i] = null;
+				}
+				return (LoginRequest) constructor.newInstance(args);
+			} catch (ReflectiveOperationException ignored) {
+			}
+		}
+		throw new IllegalStateException("Unable to instantiate LoginRequest packet");
+	}
+
+	public static EncryptionResponse createEncryptionResponse(byte[] sharedSecret, byte[] verifyToken) {
+		for (Constructor<?> constructor : EncryptionResponse.class.getConstructors()) {
+			Class<?>[] params = constructor.getParameterTypes();
+			if (params.length < 2) {
+				continue;
+			}
+			try {
+				Object[] args = new Object[params.length];
+				args[0] = sharedSecret;
+				args[1] = verifyToken;
+				for (int i = 2; i < params.length; i++) {
+					args[i] = null;
+				}
+				return (EncryptionResponse) constructor.newInstance(args);
+			} catch (ReflectiveOperationException ignored) {
+			}
+		}
+		throw new IllegalStateException("Unable to instantiate EncryptionResponse packet");
+	}
+
+	public static ClientSettings createClientSettings(String locale, byte viewDistance, int chatFlags, boolean chatColours) {
+		for (Constructor<?> constructor : ClientSettings.class.getConstructors()) {
+			Class<?>[] params = constructor.getParameterTypes();
+			if (params.length < 4) {
+				continue;
+			}
+			try {
+				Object[] args = new Object[params.length];
+				args[0] = locale;
+				args[1] = viewDistance;
+				args[2] = chatFlags;
+				args[3] = chatColours;
+				for (int i = 4; i < params.length; i++) {
+					Class<?> param = params[i];
+					if (param == byte.class || param == Byte.class) {
+						args[i] = (byte) 0;
+					} else if (param == short.class || param == Short.class) {
+						args[i] = (short) 0;
+					} else if (param == int.class || param == Integer.class) {
+						args[i] = 0;
+					} else if (param == boolean.class || param == Boolean.class) {
+						args[i] = false;
+					} else if (param.isEnum()) {
+						Object[] constants = param.getEnumConstants();
+						args[i] = ((constants != null) && (constants.length > 0)) ? constants[0] : null;
+					} else {
+						args[i] = null;
+					}
+				}
+				return (ClientSettings) constructor.newInstance(args);
+			} catch (ReflectiveOperationException ignored) {
+			}
+		}
+		throw new IllegalStateException("Unable to instantiate ClientSettings packet");
+	}
+
+	public static Login createLoginPacket(int entityId, boolean hardcode, int gamemode, int dimension, int difficulty, int maxPlayers, String levelType) {
+		for (Constructor<?> constructor : Login.class.getConstructors()) {
+			Class<?>[] params = constructor.getParameterTypes();
+			if (params.length < 1) {
+				continue;
+			}
+			try {
+				Object[] args = new Object[params.length];
+				for (int i = 0; i < params.length; i++) {
+					Class<?> param = params[i];
+					if ((i == 0) && ((param == int.class) || (param == Integer.class))) {
+						args[i] = entityId;
+					} else if ((i == 1) && ((param == boolean.class) || (param == Boolean.class))) {
+						args[i] = hardcode;
+					} else if ((i == 2) && ((param == short.class) || (param == Short.class))) {
+						args[i] = (short) gamemode;
+					} else if ((i == 3) && ((param == short.class) || (param == Short.class))) {
+						args[i] = (short) gamemode;
+					} else if ((param == String.class) && (args[i] == null)) {
+						args[i] = levelType;
+					} else if (((param == Integer.class) || (param == int.class)) && (args[i] == null)) {
+						args[i] = (i == 8) ? dimension : 0;
+					} else if (((param == Short.class) || (param == short.class)) && (args[i] == null)) {
+						args[i] = (short) ((i == 9) ? difficulty : ((i == 10) ? maxPlayers : 0));
+					} else if ((param == boolean.class) || (param == Boolean.class)) {
+						args[i] = false;
+					} else if ((param == long.class) || (param == Long.class)) {
+						args[i] = 0L;
+					} else {
+						args[i] = null;
+					}
+				}
+				return (Login) constructor.newInstance(args);
+			} catch (ReflectiveOperationException ignored) {
+			}
+		}
+		throw new IllegalStateException("Unable to instantiate Login packet");
+	}
+
+	public static String toLegacyText(Object value) {
+		if (value == null) {
+			return "";
+		}
+		if (value instanceof String) {
+			return (String) value;
+		}
+		try {
+			Method isLeft = value.getClass().getMethod("isLeft");
+			Method left = value.getClass().getMethod("left");
+			Boolean leftValue = (Boolean) isLeft.invoke(value);
+			if (Boolean.TRUE.equals(leftValue)) {
+				Object raw = left.invoke(value);
+				return (raw != null) ? raw.toString() : "";
+			}
+		} catch (ReflectiveOperationException ignored) {
+		}
+		return value.toString();
 	}
 
 	private static Object adaptTextArg(Class<?> targetType, String value) throws ReflectiveOperationException {

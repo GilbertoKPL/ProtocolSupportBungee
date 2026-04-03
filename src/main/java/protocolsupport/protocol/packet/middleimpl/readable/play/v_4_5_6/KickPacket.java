@@ -29,7 +29,7 @@ public class KickPacket extends LegacyDefinedReadableMiddlePacket {
 
 	@Override
 	public Collection<PacketWrapper> toNative() {
-		return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(new Kick(Utils.clampString(message, 256)), Unpooled.wrappedBuffer(readbytes)));
+		return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(new Kick(new TextComponent(Utils.clampString(message, 256))), Unpooled.wrappedBuffer(readbytes)));
 	}
 
 }
