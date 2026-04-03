@@ -20,6 +20,19 @@ public class ReflectionUtils {
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
+	public static <T> T getStaticFieldValue(Class<?> target, String name) throws IllegalArgumentException, IllegalAccessException {
+		Class<?> clazz = target;
+		do {
+			for (Field field : clazz.getDeclaredFields()) {
+				if (field.getName().equals(name)) {
+					return (T) setAccessible(field).get(null);
+				}
+			}
+		} while ((clazz = clazz.getSuperclass()) != null);
+		return null;
+	}
+
 	public static void setFieldValue(Object target, String name, Object value) throws IllegalArgumentException, IllegalAccessException {
 		Class<?> clazz = target.getClass();
 		do {
