@@ -129,6 +129,29 @@ public final class LegacyPacketFactory {
 		throw new IllegalStateException("Unable to instantiate LoginSuccess packet");
 	}
 
+	public static LoginSuccess createLoginSuccess(java.util.UUID uuid, String username, Object properties) {
+		for (Constructor<?> constructor : LoginSuccess.class.getConstructors()) {
+			Class<?>[] params = constructor.getParameterTypes();
+			try {
+				if (params.length == 3) {
+					return (LoginSuccess) constructor.newInstance(adaptUuidArg(params[0], uuid), username, properties);
+				}
+				if ((params.length == 2) && (params[1] == String.class)) {
+					return (LoginSuccess) constructor.newInstance(adaptUuidArg(params[0], uuid), username);
+				}
+			} catch (ReflectiveOperationException ignored) {
+			}
+		}
+		LoginSuccess packet = createLoginSuccess();
+		String normalizedId = (uuid == null) ? null : uuid.toString().replace("-", "");
+		trySet(packet, "uuid", normalizedId);
+		trySet(packet, "id", normalizedId);
+		trySet(packet, "username", username);
+		trySet(packet, "name", username);
+		trySet(packet, "properties", properties);
+		return packet;
+	}
+
 	public static LoginRequest createLoginRequest(String username) {
 		for (Constructor<?> constructor : LoginRequest.class.getConstructors()) {
 			Class<?>[] params = constructor.getParameterTypes();
@@ -272,6 +295,22 @@ public final class LegacyPacketFactory {
 			return left.invoke(null, value);
 		}
 		return value;
+	}
+
+	private static Object adaptUuidArg(Class<?> targetType, java.util.UUID uuid) {
+		if (targetType == java.util.UUID.class) {
+			return uuid;
+		}
+		return (uuid == null) ? null : uuid.toString().replace("-", "");
+	}
+
+	private static void trySet(Object instance, String fieldName, Object value) {
+		try {
+			java.lang.reflect.Field field = instance.getClass().getDeclaredField(fieldName);
+			field.setAccessible(true);
+			field.set(instance, value);
+		} catch (ReflectiveOperationException ignored) {
+		}
 	}
 
 }
