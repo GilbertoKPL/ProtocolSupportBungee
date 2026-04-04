@@ -18,11 +18,11 @@ public class ProtocolSupport extends Plugin {
 		}
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public void onEnable() {
-		if (!ProxyServer.getInstance().getConfig().isDisableEntityMetadataRewrite()) {
-			getLogger().log(Level.SEVERE, "Entity metadata rewrite must be disabled in order for plugin to work");
+		// Newer Bungee builds removed `disable_entity_metadata_rewrite`; keep plugin startup compatible.
+		if (ProxyServer.getInstance().getConfig() == null) {
+			getLogger().log(Level.WARNING, "Proxy config is unavailable during enable");
 		}
 	}
 
