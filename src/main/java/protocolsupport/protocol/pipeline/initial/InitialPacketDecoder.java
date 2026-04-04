@@ -228,7 +228,7 @@ public class InitialPacketDecoder extends SimpleChannelInboundHandler<ByteBuf> {
 			}
 		}
 		buffer.readerIndex(0);
-		channel.pipeline().firstContext().fireChannelRead(buffer.unwrap());
+		channel.pipeline().fireChannelRead(buffer.unwrap());
 	}
 
 	protected static ConnectionImpl prepare(Channel channel, ProtocolVersion version) {
