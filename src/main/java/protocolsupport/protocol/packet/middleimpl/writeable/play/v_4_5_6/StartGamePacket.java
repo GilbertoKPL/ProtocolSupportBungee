@@ -20,7 +20,7 @@ public class StartGamePacket extends LegacySingleWriteablePacket<Login> {
 		data.writeByte(packet.getGameMode());
 		data.writeByte(LegacyDimension.get(packet.getDimension()));
 		data.writeByte(packet.getDifficulty());
-		data.writeByte(0);
+		data.writeByte(128);
 		data.writeByte(packet.getMaxPlayers());
 	}
 
