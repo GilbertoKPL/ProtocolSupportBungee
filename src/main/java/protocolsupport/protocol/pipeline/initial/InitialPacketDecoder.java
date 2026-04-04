@@ -97,7 +97,7 @@ public class InitialPacketDecoder extends SimpleChannelInboundHandler<ByteBuf> {
 		cancelTask();
 		if (firstread) {
 			int firstbyte = buffer.readUnsignedByte();
-			if (firstbyte == EncapsulatedProtocolUtils.FIRST_BYTE) {
+			if (isLikelyEncapsulatedInfoHeader(firstbyte)) {
 				encapsulatedinfo = EncapsulatedProtocolUtils.readInfo(buffer);
 				buffer.discardReadBytes();
 			}
@@ -112,6 +112,16 @@ public class InitialPacketDecoder extends SimpleChannelInboundHandler<ByteBuf> {
 			}
 		} catch (EOFSignal ex) {
 		}
+	}
+
+	private boolean isLikelyEncapsulatedInfoHeader(int firstbyte) {
+		if (firstbyte != EncapsulatedProtocolUtils.FIRST_BYTE) {
+			return false;
+		}
+		if (buffer.readableBytes() < 2) {
+			return false;
+		}
+		return (buffer.getUnsignedByte(1) <= 1) && (buffer.getUnsignedByte(2) <= 1);
 	}
 
 	private void decodeRaw(ChannelHandlerContext ctx) {
