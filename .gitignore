@@ -4,7 +4,6 @@ build/
 target/
 gen/
 <<<<<<< HEAD
-libraries_runtime/
 libraries_shade/
 build_libraries/
 logs/

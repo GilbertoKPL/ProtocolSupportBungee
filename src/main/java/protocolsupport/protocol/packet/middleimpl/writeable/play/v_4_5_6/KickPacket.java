@@ -15,7 +15,7 @@ public class KickPacket extends WriteableMiddlePacket<Kick> {
 
 	@Override
 	public Collection<ByteBuf> toData(Kick packet) {
-		return Collections.singletonList(create(String.valueOf(packet.getMessage())));
+		return Collections.singletonList(create(ComponentSerializer.parse(packet.getMessage())[0].toLegacyText()));
 	}
 
 	public static ByteBuf create(String message) {

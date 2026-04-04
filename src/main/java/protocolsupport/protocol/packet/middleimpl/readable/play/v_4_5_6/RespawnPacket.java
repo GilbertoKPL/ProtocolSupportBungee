@@ -33,8 +33,8 @@ public class RespawnPacket extends LegacyDefinedReadableMiddlePacket {
 
 	@Override
 	public Collection<PacketWrapper> toNative() {
-		return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(
-			protocolsupport.protocol.utils.LegacyPacketFactory.createRespawn(dimension, (short) difficulty, (short) gamemode, levelType), Unpooled.wrappedBuffer(readbytes)
+		return Collections.singletonList(new PacketWrapper(
+			new Respawn(dimension, null, 0, (short) difficulty, (short) gamemode, (short) gamemode, levelType, false, false, true), Unpooled.wrappedBuffer(readbytes)
 		));
 	}
 

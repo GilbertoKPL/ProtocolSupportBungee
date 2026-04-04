@@ -6,6 +6,7 @@ import java.util.Collections;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.md_5.bungee.protocol.PacketWrapper;
+import net.md_5.bungee.protocol.packet.ClientSettings;
 import protocolsupport.protocol.packet.id.LegacyPacketId;
 import protocolsupport.protocol.packet.middleimpl.readable.LegacyDefinedReadableMiddlePacket;
 import protocolsupport.protocol.serializer.StringSerializer;
@@ -35,7 +36,7 @@ public class ClientSettingsPacket extends LegacyDefinedReadableMiddlePacket {
 
 	@Override
 	public Collection<PacketWrapper> toNative() {
-		return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(protocolsupport.protocol.utils.LegacyPacketFactory.createClientSettings(locale, viewDistance, chatFlags, chatColours), Unpooled.wrappedBuffer(readbytes)));
+		return Collections.singletonList(new PacketWrapper(new ClientSettings(locale, viewDistance, chatFlags, chatColours, difficulty, (byte) 255, 1), Unpooled.wrappedBuffer(readbytes)));
 	}
 
 }

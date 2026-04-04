@@ -15,7 +15,7 @@ public class ScoreboardObjectivePacket extends LegacySingleWriteablePacket<Score
 	@Override
 	protected void write(ByteBuf data, ScoreboardObjective packet) {
 		StringSerializer.writeShortUTF16BEString(data, packet.getName());
-		StringSerializer.writeShortUTF16BEString(data, protocolsupport.protocol.utils.LegacyPacketFactory.toLegacyText(packet.getValue()));
+		StringSerializer.writeShortUTF16BEString(data, packet.getValue());
 		data.writeByte(packet.getAction());
 	}
 

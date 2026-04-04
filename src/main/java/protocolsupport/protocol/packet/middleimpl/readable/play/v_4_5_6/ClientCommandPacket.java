@@ -5,8 +5,8 @@ import java.util.Collections;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import net.md_5.bungee.protocol.DefinedPacket;
 import net.md_5.bungee.protocol.PacketWrapper;
+import net.md_5.bungee.protocol.packet.ClientStatus;
 import protocolsupport.protocol.packet.id.LegacyPacketId;
 import protocolsupport.protocol.packet.middleimpl.readable.LegacyDefinedReadableMiddlePacket;
 
@@ -26,13 +26,7 @@ public class ClientCommandPacket extends LegacyDefinedReadableMiddlePacket {
 	@Override
 	public Collection<PacketWrapper> toNative() {
 		if (status == 1) {
-			try {
-				Class<?> clazz = Class.forName("net.md_5.bungee.protocol.packet.ClientStatus");
-				DefinedPacket packet = (DefinedPacket) clazz.getDeclaredConstructor(byte.class).newInstance((byte) status);
-				return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(packet, Unpooled.wrappedBuffer(readbytes)));
-			} catch (ReflectiveOperationException ignored) {
-				return Collections.emptyList();
-			}
+			return Collections.singletonList(new PacketWrapper(new ClientStatus((byte) status), Unpooled.wrappedBuffer(readbytes)));
 		} else {
 			return Collections.emptyList();
 		}

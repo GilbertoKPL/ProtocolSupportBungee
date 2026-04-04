@@ -27,7 +27,7 @@ public class TabCompleteResponsePacket extends LegacyDefinedReadableMiddlePacket
 
 	@Override
 	public Collection<PacketWrapper> toNative() {
-		return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(new TabCompleteResponse(Arrays.asList(string.split("\u0000"))), Unpooled.wrappedBuffer(readbytes)));
+		return Collections.singletonList(new PacketWrapper(new TabCompleteResponse(Arrays.asList(string.split("\u0000"))), Unpooled.wrappedBuffer(readbytes)));
 	}
 
 }

@@ -25,7 +25,7 @@ public class KeepAlivePacket extends LegacyDefinedReadableMiddlePacket {
 
 	@Override
 	public Collection<PacketWrapper> toNative() {
-		return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(new KeepAlive(keepaliveId), Unpooled.wrappedBuffer(readbytes)));
+		return Collections.singletonList(new PacketWrapper(new KeepAlive(keepaliveId), Unpooled.wrappedBuffer(readbytes)));
 	}
 
 }

@@ -26,8 +26,8 @@ public class PingHandshakePacket extends LegacyDefinedReadableMiddlePacket {
 	@Override
 	public Collection<PacketWrapper> toNative() {
 		return Arrays.asList(
-				protocolsupport.protocol.utils.PacketWrapperFactory.create(new Handshake(ProtocolVersionsHelper.LATEST_PC.getId(), "127.0.0.1", 25565, 1), Unpooled.EMPTY_BUFFER),
-				protocolsupport.protocol.utils.PacketWrapperFactory.create(new StatusRequest(), Unpooled.wrappedBuffer(readbytes))
+				new PacketWrapper(new Handshake(ProtocolVersionsHelper.LATEST_PC.getId(), "127.0.0.1", 25565, 1), Unpooled.EMPTY_BUFFER),
+				new PacketWrapper(new StatusRequest(), Unpooled.wrappedBuffer(readbytes))
 		);
 	}
 

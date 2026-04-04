@@ -30,7 +30,7 @@ public class ScoreboardObjectivePacket extends LegacyDefinedReadableMiddlePacket
 
 	@Override
 	public Collection<PacketWrapper> toNative() {
-		return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(protocolsupport.protocol.utils.LegacyPacketFactory.createScoreboardObjective(name, value, action), Unpooled.wrappedBuffer(readbytes)));
+		return Collections.singletonList(new PacketWrapper(new ScoreboardObjective(name, value, ScoreboardObjective.HealthDisplay.INTEGER, action), Unpooled.wrappedBuffer(readbytes)));
 	}
 
 }

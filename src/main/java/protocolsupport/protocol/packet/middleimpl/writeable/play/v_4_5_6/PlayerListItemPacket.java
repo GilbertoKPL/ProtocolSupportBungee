@@ -29,8 +29,7 @@ public class PlayerListItemPacket extends WriteableMiddlePacket<PlayerListItem> 
 	}
 
 	private static String getDisplayName(Item item) {
-		Object displayName = item.getDisplayName();
-		String name = (displayName == null) ? null : displayName.toString();
+		String name = item.getDisplayName();
 		if (name == null) {
 			name = "Unknown";
 		}

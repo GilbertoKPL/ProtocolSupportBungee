@@ -25,7 +25,7 @@ public class PipeLineBuilder extends IPipeLineBuilder {
 	public void buildBungeeClientPipeLine(Channel channel, Connection connection) {
 		ChannelPipeline pipeline = channel.pipeline();
 		pipeline.replace(PipelineUtils.FRAME_DECODER, PipelineUtils.FRAME_DECODER, new NoOpFrameDecoder());
-		pipeline.replace(protocolsupport.protocol.utils.PipelineNames.FRAME_PREPENDER, protocolsupport.protocol.utils.PipelineNames.FRAME_PREPENDER, new NoOpFrameEncoder());
+		pipeline.replace(PipelineUtils.FRAME_PREPENDER, PipelineUtils.FRAME_PREPENDER, new NoOpFrameEncoder());
 	}
 
 	@Override

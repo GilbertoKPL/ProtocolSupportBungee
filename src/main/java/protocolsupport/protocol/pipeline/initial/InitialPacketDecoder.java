@@ -97,7 +97,7 @@ public class InitialPacketDecoder extends SimpleChannelInboundHandler<ByteBuf> {
 		cancelTask();
 		if (firstread) {
 			int firstbyte = buffer.readUnsignedByte();
-			if (isLikelyEncapsulatedInfoHeader(firstbyte)) {
+			if (firstbyte == EncapsulatedProtocolUtils.FIRST_BYTE) {
 				encapsulatedinfo = EncapsulatedProtocolUtils.readInfo(buffer);
 				buffer.discardReadBytes();
 			}
@@ -112,16 +112,6 @@ public class InitialPacketDecoder extends SimpleChannelInboundHandler<ByteBuf> {
 			}
 		} catch (EOFSignal ex) {
 		}
-	}
-
-	private boolean isLikelyEncapsulatedInfoHeader(int firstbyte) {
-		if (firstbyte != EncapsulatedProtocolUtils.FIRST_BYTE) {
-			return false;
-		}
-		if (buffer.readableBytes() < 2) {
-			return false;
-		}
-		return (buffer.getUnsignedByte(1) <= 1) && (buffer.getUnsignedByte(2) <= 1);
 	}
 
 	private void decodeRaw(ChannelHandlerContext ctx) {
@@ -231,7 +221,7 @@ public class InitialPacketDecoder extends SimpleChannelInboundHandler<ByteBuf> {
 			pipeline.replace(PipelineUtils.FRAME_DECODER, PipelineUtils.FRAME_DECODER, new VarIntFrameDecoder());
 			if (encapsulatedinfo.hasCompression()) {
 				pipeline.addAfter(PipelineUtils.FRAME_DECODER, "decompress", new PacketDecompressor());
-				pipeline.addAfter(protocolsupport.protocol.utils.PipelineNames.FRAME_PREPENDER, "compress", new PacketCompressor(256));
+				pipeline.addAfter(PipelineUtils.FRAME_PREPENDER, "compress", new PacketCompressor(256));
 			}
 			if ((encapsulatedinfo.getAddress() != null) && connection.getRawAddress().getAddress().isLoopbackAddress()) {
 				connection.changeAddress(encapsulatedinfo.getAddress());

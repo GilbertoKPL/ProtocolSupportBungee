@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.Validate;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 import protocolsupport.utils.Utils;
 
 public enum ProtocolVersion {
@@ -70,7 +70,7 @@ public enum ProtocolVersion {
 	.collect(Collectors.toList())
 	.toArray(new ProtocolVersion[0]);
 
-	private static final Int2ObjectOpenHashMap<ProtocolVersion> byProtocolId = new Int2ObjectOpenHashMap<>();
+	private static final TIntObjectHashMap<ProtocolVersion> byProtocolId = new TIntObjectHashMap<>();
 	static {
 		Arrays.stream(ProtocolVersion.getAllSupported()).forEach(version -> byProtocolId.put(version.id, version));
 	}

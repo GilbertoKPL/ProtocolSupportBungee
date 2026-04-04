@@ -12,11 +12,20 @@ import com.google.gson.JsonParseException;
 
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.TranslatableComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
+import net.md_5.bungee.chat.TextComponentSerializer;
+import net.md_5.bungee.chat.TranslatableComponentSerializer;
 
 public class PingSerializer {
 
 	private static final Gson gson = new GsonBuilder().registerTypeAdapter(ServerPing.class, new ServerPingDeserializer()).create();
+
+	private static final Gson chatGson = new GsonBuilder()
+	.registerTypeAdapter(BaseComponent.class, new ComponentSerializer())
+	.registerTypeAdapter(TextComponent.class, new TextComponentSerializer())
+	.registerTypeAdapter(TranslatableComponent.class, new TranslatableComponentSerializer())
+	.create();
 
 	public static ServerPing fromJson(String json) {
 		return gson.fromJson(json, ServerPing.class);
@@ -28,20 +37,10 @@ public class PingSerializer {
 			JsonObject root = element.getAsJsonObject();
 			JsonObject version = root.get("version").getAsJsonObject();
 			JsonObject players = root.get("players").getAsJsonObject();
-			BaseComponent motd;
-			JsonElement description = root.get("description");
-			if (description == null || description.isJsonNull()) {
-				motd = new TextComponent("");
-			} else if (description.isJsonPrimitive()) {
-				motd = new TextComponent(description.getAsString());
-			} else {
-				BaseComponent[] components = ComponentSerializer.parse(description.toString());
-				motd = (components.length > 0) ? components[0] : new TextComponent("");
-			}
 			return new ServerPing(
 				new ServerPingVersion(version.get("name").getAsString()),
 				new ServerPingPlayers(players.get("online").getAsInt(), players.get("max").getAsInt()),
-				motd
+				chatGson.fromJson(root.get("description"), BaseComponent.class)
 			);
 		}
 	}

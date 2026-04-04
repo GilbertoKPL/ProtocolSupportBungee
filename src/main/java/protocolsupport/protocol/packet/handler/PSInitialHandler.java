@@ -41,6 +41,7 @@ import net.md_5.bungee.protocol.Protocol;
 import net.md_5.bungee.protocol.packet.EncryptionRequest;
 import net.md_5.bungee.protocol.packet.EncryptionResponse;
 import net.md_5.bungee.protocol.packet.LoginRequest;
+import net.md_5.bungee.protocol.packet.LoginSuccess;
 import protocolsupport.api.ProtocolType;
 import protocolsupport.api.ProtocolVersion;
 import protocolsupport.api.events.PlayerLoginFinishEvent;
@@ -50,7 +51,6 @@ import protocolsupport.api.utils.Profile;
 import protocolsupport.api.utils.ProfileProperty;
 import protocolsupport.protocol.ConnectionImpl;
 import protocolsupport.protocol.utils.GameProfile;
-import protocolsupport.protocol.utils.LegacyPacketFactory;
 
 public class PSInitialHandler extends InitialHandler {
 
@@ -201,7 +201,7 @@ public class PSInitialHandler extends InitialHandler {
 			case PC: {
 				if (isOnlineMode()) {
 					state = LoginState.KEY;
-					sendPacketCompat((request = EncryptionUtil.encryptRequest()));
+					unsafe().sendPacket((request = EncryptionUtil.encryptRequest()));
 				} else {
 					offlineuuid = Profile.generateOfflineModeUUID(getName());
 					updateUUID(offlineuuid, true);
@@ -224,7 +224,7 @@ public class PSInitialHandler extends InitialHandler {
 		channel.addBefore(PipelineUtils.FRAME_DECODER, PipelineUtils.DECRYPT_HANDLER, new CipherDecoder(decrypt));
 		if (isFullEncryption(connection.getVersion())) {
 			BungeeCipher encrypt = EncryptionUtil.getCipher(true, sharedKey);
-			channel.addBefore(protocolsupport.protocol.utils.PipelineNames.FRAME_PREPENDER, PipelineUtils.ENCRYPT_HANDLER, new CipherEncoder(encrypt));
+			channel.addBefore(PipelineUtils.FRAME_PREPENDER, PipelineUtils.ENCRYPT_HANDLER, new CipherEncoder(encrypt));
 		}
 		String encName = URLEncoder.encode(getName(), "UTF-8");
 		MessageDigest sha = MessageDigest.getInstance("SHA-1");
@@ -238,7 +238,7 @@ public class PSInitialHandler extends InitialHandler {
 			@Override
 			public void done(String result, Throwable error) {
 				if (error == null) {
-					LoginResult obj = new com.google.gson.Gson().fromJson(result, LoginResult.class);
+					LoginResult obj = BungeeCord.getInstance().gson.fromJson(result, LoginResult.class);
 					if ((obj != null) && (obj.getId() != null)) {
 						loginProfile = obj;
 						updateUsername(obj.getName(), true);
@@ -327,7 +327,7 @@ public class PSInitialHandler extends InitialHandler {
 				userCon.setCompressionThreshold(BungeeCord.getInstance().config.getCompressionThreshold());
 			}
 			userCon.init();
-			sendPacketCompat(LegacyPacketFactory.createLoginSuccess(getUniqueId(), getName(), loginProfile.getProperties()));
+			unsafe().sendPacket(new LoginSuccess(getUniqueId(), getName()));
 			channel.setProtocol(Protocol.GAME);
 
 			PlayerLoginFinishEvent loginFinishEvent = new PlayerLoginFinishEvent(connection);
@@ -338,6 +338,7 @@ public class PSInitialHandler extends InitialHandler {
 			}
 
 			channel.getHandle().pipeline().get(HandlerBoss.class).setHandler(new UpstreamBridge(BungeeCord.getInstance(), userCon));
+			BungeeCord.getInstance().getPluginManager().callEvent(new PostLoginEvent(userCon));
 
 			ServerInfo server;
 			if (BungeeCord.getInstance().getReconnectHandler() != null) {
@@ -348,58 +349,8 @@ public class PSInitialHandler extends InitialHandler {
 			if (server == null) {
 				server = BungeeCord.getInstance().getServerInfo(getListener().getDefaultServer());
 			}
-			firePostLoginEvent(userCon, server);
 			userCon.connect(server, null, true);
 		}
-	}
-
-	@SuppressWarnings("unchecked")
-	protected void firePostLoginEvent(UserConnection userCon, ServerInfo server) {
-		try {
-			for (java.lang.reflect.Constructor<?> constructor : PostLoginEvent.class.getConstructors()) {
-				Class<?>[] params = constructor.getParameterTypes();
-				if (params.length == 1) {
-					BungeeCord.getInstance().getPluginManager().callEvent((PostLoginEvent) constructor.newInstance(userCon));
-					return;
-				}
-				if (params.length == 3) {
-					Callback<PostLoginEvent> callback = new Callback<PostLoginEvent>() {
-						@Override
-						public void done(PostLoginEvent result, Throwable error) {
-						}
-					};
-					BungeeCord.getInstance().getPluginManager().callEvent((PostLoginEvent) constructor.newInstance(userCon, server, callback));
-					return;
-				}
-			}
-		throw new IllegalStateException("Unsupported PostLoginEvent constructor signature");
-		} catch (ReflectiveOperationException ex) {
-			throw new RuntimeException("Unable to fire PostLoginEvent", ex);
-		}
-	}
-
-	protected void sendPacketCompat(Object packet) {
-		try {
-			java.lang.reflect.Method unsafeMethod = null;
-			Class<?> source = getClass();
-			while ((source != null) && (unsafeMethod == null)) {
-				try {
-					unsafeMethod = source.getDeclaredMethod("unsafe");
-				} catch (NoSuchMethodException ignored) {
-					source = source.getSuperclass();
-				}
-			}
-			if (unsafeMethod == null) {
-				throw new NoSuchMethodException("unsafe");
-			}
-			unsafeMethod.setAccessible(true);
-			Object unsafe = unsafeMethod.invoke(this);
-			java.lang.reflect.Method sendPacketMethod = unsafe.getClass().getMethod("sendPacket", Object.class);
-			sendPacketMethod.invoke(unsafe, packet);
-			return;
-		} catch (ReflectiveOperationException ignored) {
-		}
-		channel.write(packet);
 	}
 
 	public enum LoginState {

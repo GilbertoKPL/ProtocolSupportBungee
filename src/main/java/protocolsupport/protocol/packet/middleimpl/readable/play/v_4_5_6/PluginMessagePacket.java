@@ -29,7 +29,7 @@ public class PluginMessagePacket extends LegacyDefinedReadableMiddlePacket {
 
 	@Override
 	public Collection<PacketWrapper> toNative() {
-		return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(new PluginMessage(tag, data, true), Unpooled.wrappedBuffer(readbytes)));
+		return Collections.singletonList(new PacketWrapper(new PluginMessage(tag, data, true), Unpooled.wrappedBuffer(readbytes)));
 	}
 
 }

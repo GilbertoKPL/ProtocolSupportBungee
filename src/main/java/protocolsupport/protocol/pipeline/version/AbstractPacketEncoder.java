@@ -31,18 +31,6 @@ public abstract class AbstractPacketEncoder extends MinecraftEncoder {
 		});
 	}
 
-	@SuppressWarnings("unchecked")
-	protected void registerOptional(String packetClassName, Class<? extends WriteableMiddlePacket<?>> transformerClass) {
-		try {
-			Class<?> packetClass = Class.forName(packetClassName);
-			if (DefinedPacket.class.isAssignableFrom(packetClass)) {
-				registry.register((Class<? extends DefinedPacket>) packetClass, transformerClass);
-			}
-		} catch (ClassNotFoundException ignored) {
-			// Packet class is not present in this BungeeCord version.
-		}
-	}
-
 	@Override
 	public void write(final ChannelHandlerContext ctx, final Object msgObject, final ChannelPromise promise) throws Exception {
 		try {

@@ -41,7 +41,7 @@ public class PlayerListItemPacket extends LegacyDefinedReadableMiddlePacket {
 		PlayerListItem packet = new PlayerListItem();
 		packet.setAction(action);
 		packet.setItems(items);
-		return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(packet, Unpooled.wrappedBuffer(readbytes)));
+		return Collections.singletonList(new PacketWrapper(packet, Unpooled.wrappedBuffer(readbytes)));
 	}
 
 }

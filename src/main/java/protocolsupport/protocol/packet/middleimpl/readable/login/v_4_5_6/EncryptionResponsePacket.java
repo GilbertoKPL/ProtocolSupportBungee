@@ -6,6 +6,7 @@ import java.util.Collections;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.md_5.bungee.protocol.PacketWrapper;
+import net.md_5.bungee.protocol.packet.EncryptionResponse;
 import protocolsupport.protocol.packet.id.LegacyPacketId;
 import protocolsupport.protocol.packet.middleimpl.readable.LegacyDefinedReadableMiddlePacket;
 import protocolsupport.protocol.serializer.ArraySerializer;
@@ -27,7 +28,7 @@ public class EncryptionResponsePacket extends LegacyDefinedReadableMiddlePacket 
 
 	@Override
 	public Collection<PacketWrapper> toNative() {
-		return Collections.singletonList(protocolsupport.protocol.utils.PacketWrapperFactory.create(protocolsupport.protocol.utils.LegacyPacketFactory.createEncryptionResponse(sharedSecret, verifyToken), Unpooled.wrappedBuffer(readbytes)));
+		return Collections.singletonList(new PacketWrapper(new EncryptionResponse(sharedSecret, verifyToken), Unpooled.wrappedBuffer(readbytes)));
 	}
 
 }
