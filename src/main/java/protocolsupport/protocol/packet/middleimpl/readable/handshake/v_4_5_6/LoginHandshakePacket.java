@@ -11,7 +11,6 @@ import net.md_5.bungee.protocol.packet.LoginRequest;
 import protocolsupport.protocol.packet.id.LegacyPacketId;
 import protocolsupport.protocol.packet.middleimpl.readable.LegacyDefinedReadableMiddlePacket;
 import protocolsupport.protocol.serializer.StringSerializer;
-import protocolsupport.protocol.utils.ProtocolVersionsHelper;
 
 public class LoginHandshakePacket extends LegacyDefinedReadableMiddlePacket {
 
@@ -22,10 +21,11 @@ public class LoginHandshakePacket extends LegacyDefinedReadableMiddlePacket {
 	protected String username;
 	protected String host;
 	protected int port;
+	protected int protocolVersion;
 
 	@Override
 	protected void read0(ByteBuf from) {
-		from.readByte();
+		protocolVersion = from.readUnsignedByte();
 		username = StringSerializer.readShortUTF16BEString(from);
 		host = StringSerializer.readShortUTF16BEString(from);
 		port = from.readInt();
@@ -34,7 +34,7 @@ public class LoginHandshakePacket extends LegacyDefinedReadableMiddlePacket {
 	@Override
 	public Collection<PacketWrapper> toNative() {
 		return Arrays.asList(
-			new PacketWrapper(new Handshake(ProtocolVersionsHelper.LATEST_PC.getId(), host, port, 2), Unpooled.wrappedBuffer(readbytes)),
+			new PacketWrapper(new Handshake(protocolVersion, host, port, 2), Unpooled.wrappedBuffer(readbytes)),
 			new PacketWrapper(new LoginRequest(username), Unpooled.EMPTY_BUFFER)
 		);
 	}
