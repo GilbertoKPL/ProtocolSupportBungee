@@ -5,6 +5,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.ReferenceCountUtil;
+import java.util.NoSuchElementException;
 import net.md_5.bungee.protocol.DefinedPacket;
 import net.md_5.bungee.protocol.MinecraftEncoder;
 import net.md_5.bungee.protocol.Protocol;
@@ -55,8 +56,13 @@ public abstract class AbstractPacketEncoder extends MinecraftEncoder {
 	@SuppressWarnings("unchecked")
 	@Override
 	protected void encode(ChannelHandlerContext ctx, DefinedPacket msg, ByteBuf out) throws Exception {
-		WriteableMiddlePacket<DefinedPacket> transformer = (WriteableMiddlePacket<DefinedPacket>) registry.getTransformer(msg.getClass());
-		transformer.toData(msg).forEach(ctx::writeAndFlush);
+		try {
+			WriteableMiddlePacket<DefinedPacket> transformer = (WriteableMiddlePacket<DefinedPacket>) registry.getTransformer(msg.getClass());
+			transformer.toData(msg).forEach(ctx::writeAndFlush);
+		} catch (NoSuchElementException noSuchElementException) {
+			// Legacy clients cannot understand many modern packets; silently drop unsupported packets
+			// instead of disconnecting the player on unmapped packet classes.
+		}
 	}
 
 }

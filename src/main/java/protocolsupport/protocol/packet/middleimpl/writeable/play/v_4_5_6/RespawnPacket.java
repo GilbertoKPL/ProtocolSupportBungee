@@ -18,7 +18,7 @@ public class RespawnPacket extends LegacySingleWriteablePacket<Respawn> {
 		data.writeInt(LegacyDimension.get(packet.getDimension()));
 		data.writeByte(packet.getDifficulty());
 		data.writeByte(packet.getGameMode());
-		data.writeShort(256);
+		data.writeShort(128);
 		StringSerializer.writeShortUTF16BEString(data, packet.getLevelType());
 	}
 
