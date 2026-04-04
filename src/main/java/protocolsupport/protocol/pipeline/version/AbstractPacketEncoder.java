@@ -5,6 +5,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.ReferenceCountUtil;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 import java.util.NoSuchElementException;
 import net.md_5.bungee.protocol.DefinedPacket;
 import net.md_5.bungee.protocol.MinecraftEncoder;
@@ -16,6 +18,9 @@ import protocolsupport.protocol.utils.ProtocolVersionsHelper;
 import protocolsupport.protocol.utils.registry.ClassMapMiddleTransformerRegistry;
 
 public abstract class AbstractPacketEncoder extends MinecraftEncoder {
+
+	private static final InternalLogger logger = InternalLoggerFactory.getInstance(AbstractPacketEncoder.class);
+	private static final boolean debugLegacyPackets = Boolean.getBoolean("ps.debug.legacy");
 
 	protected final ClassMapMiddleTransformerRegistry<DefinedPacket, WriteableMiddlePacket<?>> registry = new ClassMapMiddleTransformerRegistry<>();
 
@@ -58,10 +63,14 @@ public abstract class AbstractPacketEncoder extends MinecraftEncoder {
 	protected void encode(ChannelHandlerContext ctx, DefinedPacket msg, ByteBuf out) throws Exception {
 		try {
 			WriteableMiddlePacket<DefinedPacket> transformer = (WriteableMiddlePacket<DefinedPacket>) registry.getTransformer(msg.getClass());
+			if (debugLegacyPackets) {
+				logger.info("[ps-debug] encode {} via {}", msg.getClass().getSimpleName(), transformer.getClass().getSimpleName());
+			}
 			transformer.toData(msg).forEach(ctx::writeAndFlush);
 		} catch (NoSuchElementException noSuchElementException) {
-			// Legacy clients cannot understand many modern packets; silently drop unsupported packets
-			// instead of disconnecting the player on unmapped packet classes.
+			if (debugLegacyPackets) {
+				logger.warn("[ps-debug] dropped unmapped packet {}", msg.getClass().getName(), noSuchElementException);
+			}
 		}
 	}
 
