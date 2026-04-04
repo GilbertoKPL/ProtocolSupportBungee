@@ -11,6 +11,8 @@ import protocolsupport.protocol.storage.NetworkDataCache;
 
 public class PipeLineBuilder extends IPipeLineBuilder {
 
+	private static final boolean useLegacyServerPipeline = Boolean.getBoolean("ps.legacy.serverpipeline");
+
 	@Override
 	public void buildBungeeClientCodec(Channel channel, Connection connection) {
 		ChannelPipeline pipeline = channel.pipeline();
@@ -29,8 +31,16 @@ public class PipeLineBuilder extends IPipeLineBuilder {
 
 	@Override
 	public void buildBungeeServer(Channel channel, Connection connection) {
-		// Keep the default Bungee server connector pipeline so backend servers receive a normal
-		// modern handshake/login sequence. Legacy translation is only required on the client side.
+		if (!useLegacyServerPipeline) {
+			// Default mode: keep Bungee's server connector pipeline untouched so modern backends
+			// receive the expected handshake/login sequence.
+			return;
+		}
+		ChannelPipeline pipeline = channel.pipeline();
+		pipeline.addFirst(new EncapsulatedHandshakeSender(null, false));
+		NetworkDataCache cache = NetworkDataCache.getFrom(connection);
+		pipeline.replace(PipelineUtils.PACKET_DECODER, PipelineUtils.PACKET_DECODER, new FromServerPacketDecoder(connection, cache));
+		pipeline.replace(PipelineUtils.PACKET_ENCODER, PipelineUtils.PACKET_ENCODER, new ToServerPacketEncoder(connection, cache));
 	}
 
 }
