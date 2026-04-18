@@ -5,7 +5,6 @@ import io.netty.channel.ChannelPipeline;
 import net.md_5.bungee.netty.PipelineUtils;
 import protocolsupport.api.Connection;
 import protocolsupport.protocol.pipeline.IPipeLineBuilder;
-import protocolsupport.protocol.pipeline.common.EncapsulatedHandshakeSender;
 import protocolsupport.protocol.pipeline.common.NoOpFrameDecoder;
 import protocolsupport.protocol.pipeline.common.NoOpFrameEncoder;
 import protocolsupport.protocol.storage.NetworkDataCache;
@@ -30,11 +29,6 @@ public class PipeLineBuilder extends IPipeLineBuilder {
 
 	@Override
 	public void buildBungeeServer(Channel channel, Connection connection) {
-		ChannelPipeline pipeline = channel.pipeline();
-		pipeline.addFirst(new EncapsulatedHandshakeSender(null, false));
-		NetworkDataCache cache = NetworkDataCache.getFrom(connection);
-		pipeline.replace(PipelineUtils.PACKET_DECODER, PipelineUtils.PACKET_DECODER, new FromServerPacketDecoder(connection, cache));
-		pipeline.replace(PipelineUtils.PACKET_ENCODER, PipelineUtils.PACKET_ENCODER, new ToServerPacketEncoder(connection, cache));
 	}
 
 }
