@@ -18,7 +18,6 @@ import net.md_5.bungee.protocol.Varint21LengthFieldPrepender;
 import protocolsupport.protocol.ConnectionImpl;
 import protocolsupport.protocol.packet.handler.PSInitialHandler;
 import protocolsupport.protocol.pipeline.ChannelHandlers;
-import protocolsupport.protocol.pipeline.IPipeLineBuilder;
 import protocolsupport.protocol.pipeline.common.LogicHandler;
 import protocolsupport.protocol.pipeline.initial.InitialPacketDecoder;
 import protocolsupport.protocol.storage.ProtocolStorage;
@@ -71,10 +70,9 @@ public class BungeeNettyChannelInjector extends Varint21LengthFieldPrepender {
 				ConnectionImpl connection = ConnectionImpl.getFromChannel(((ChannelWrapper) ReflectionUtils.getFieldValue(ReflectionUtils.getFieldValue(handler, "user"), "ch")).getHandle());
 				pipeline.addBefore(PipelineUtils.BOSS_HANDLER, ChannelHandlers.LOGIC, new LogicHandler(connection, false));
 				connection.setServerConnectionChannel(channel);
-				IPipeLineBuilder builder = InitialPacketDecoder.BUILDERS.get(connection.getVersion());
-				if (builder != null) {
-					builder.buildBungeeServer(channel, connection);
-				}
+				// Keep Bungee's default server connector pipeline. Legacy protocol translation is
+				// only required on the client-facing side and rewriting backend connector packets
+				// can break modern backend login/handshake.
 			}
 		}
 
