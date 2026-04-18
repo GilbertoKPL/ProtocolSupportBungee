@@ -14,6 +14,9 @@ import protocolsupport.protocol.serializer.StringSerializer;
 
 public class LoginHandshakePacket extends LegacyDefinedReadableMiddlePacket {
 
+	// Always advertise as 1.12.2 upstream for legacy (1.4/1.5/1.6) clients.
+	protected static final int backendProtocolVersion = 340;
+
 	public LoginHandshakePacket() {
 		super(LegacyPacketId.Serverbound.HANDSHAKE_LOGIN);
 	}
@@ -25,7 +28,7 @@ public class LoginHandshakePacket extends LegacyDefinedReadableMiddlePacket {
 
 	@Override
 	protected void read0(ByteBuf from) {
-		protocolVersion = from.readUnsignedByte();
+		from.readUnsignedByte();
 		username = StringSerializer.readShortUTF16BEString(from);
 		host = StringSerializer.readShortUTF16BEString(from);
 		port = from.readInt();
@@ -34,7 +37,7 @@ public class LoginHandshakePacket extends LegacyDefinedReadableMiddlePacket {
 	@Override
 	public Collection<PacketWrapper> toNative() {
 		return Arrays.asList(
-			new PacketWrapper(new Handshake(protocolVersion, host, port, 2), Unpooled.wrappedBuffer(readbytes)),
+			new PacketWrapper(new Handshake(backendProtocolVersion, host, port, 2), Unpooled.wrappedBuffer(readbytes)),
 			new PacketWrapper(new LoginRequest(username), Unpooled.EMPTY_BUFFER)
 		);
 	}
