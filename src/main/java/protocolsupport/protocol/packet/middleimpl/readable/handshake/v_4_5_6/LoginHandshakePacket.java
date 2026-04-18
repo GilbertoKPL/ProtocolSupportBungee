@@ -24,6 +24,7 @@ public class LoginHandshakePacket extends LegacyDefinedReadableMiddlePacket {
 	protected String username;
 	protected String host;
 	protected int port;
+	protected int protocolVersion;
 
 	@Override
 	protected void read0(ByteBuf from) {
