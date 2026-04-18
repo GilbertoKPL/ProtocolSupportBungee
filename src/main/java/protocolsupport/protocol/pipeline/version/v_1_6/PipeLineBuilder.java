@@ -5,13 +5,12 @@ import io.netty.channel.ChannelPipeline;
 import net.md_5.bungee.netty.PipelineUtils;
 import protocolsupport.api.Connection;
 import protocolsupport.protocol.pipeline.IPipeLineBuilder;
+import protocolsupport.protocol.pipeline.common.EncapsulatedHandshakeSender;
 import protocolsupport.protocol.pipeline.common.NoOpFrameDecoder;
 import protocolsupport.protocol.pipeline.common.NoOpFrameEncoder;
 import protocolsupport.protocol.storage.NetworkDataCache;
 
 public class PipeLineBuilder extends IPipeLineBuilder {
-
-	private static final boolean useLegacyServerPipeline = Boolean.getBoolean("ps.legacy.serverpipeline");
 
 	@Override
 	public void buildBungeeClientCodec(Channel channel, Connection connection) {
@@ -31,11 +30,6 @@ public class PipeLineBuilder extends IPipeLineBuilder {
 
 	@Override
 	public void buildBungeeServer(Channel channel, Connection connection) {
-		if (!useLegacyServerPipeline) {
-			// Default mode: keep Bungee's server connector pipeline untouched so modern backends
-			// receive the expected handshake/login sequence.
-			return;
-		}
 		ChannelPipeline pipeline = channel.pipeline();
 		pipeline.addFirst(new EncapsulatedHandshakeSender(null, false));
 		NetworkDataCache cache = NetworkDataCache.getFrom(connection);

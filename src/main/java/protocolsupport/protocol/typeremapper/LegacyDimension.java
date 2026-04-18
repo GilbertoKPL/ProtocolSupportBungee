@@ -6,7 +6,7 @@ public class LegacyDimension {
 
 	public static int get(Object dimension) {
 		if (dimension instanceof String) {
-			return get(dimension);
+			return getId((String) dimension);
 		} else if (dimension instanceof Number) {
 			return ((Number) dimension).intValue();
 		} else {
