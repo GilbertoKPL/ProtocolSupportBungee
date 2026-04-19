@@ -151,7 +151,9 @@ public class PSInitialHandler extends InitialHandler {
 	public void handle(LoginRequest lLoginRequest) throws Exception {
 		Preconditions.checkState(state == LoginState.HELLO, "Not expecting USERNAME");
 		state = LoginState.ONLINEMODERESOLVE;
-		debug("received login request username={0} host={1} version={2}", lLoginRequest.getData(), getHandshake().getHost(), connection.getVersion());
+		String host = getHandshake().getHost();
+		boolean hasForgeMarker = (host != null) && host.contains("\0FML\0");
+		debug("received login request username={0} host={1} forgeMarker={2} version={3}", lLoginRequest.getData(), sanitizeHostForDebug(host), hasForgeMarker, connection.getVersion());
 
 		loginRequest = lLoginRequest;
 
@@ -387,6 +389,10 @@ public class PSInitialHandler extends InitialHandler {
 		if (logger != null) {
 			logger.info("[ps-debug] " + MessageFormat.format(pattern, args));
 		}
+	}
+
+	private static String sanitizeHostForDebug(String host) {
+		return host == null ? "null" : host.replace("\0", "\\0");
 	}
 
 	public enum LoginState {

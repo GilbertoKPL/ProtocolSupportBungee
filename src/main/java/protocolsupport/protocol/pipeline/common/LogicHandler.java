@@ -50,6 +50,8 @@ public class LogicHandler extends ChannelDuplexHandler {
 				logger.info("[ps-debug] client channel active address={} version={} profile={}", connection.getRawAddress(), connection.getVersion(), connection.getProfile());
 			}
 			ProxyServer.getInstance().getPluginManager().callEvent(new ConnectionOpenEvent(connection));
+		} else if (debugConnection) {
+			logger.info("[ps-debug] server channel active serverAddress={} clientAddress={} version={}", ctx.channel().remoteAddress(), connection.getRawAddress(), connection.getVersion());
 		}
 	}
 
@@ -62,6 +64,8 @@ public class LogicHandler extends ChannelDuplexHandler {
 			}
 			ProxyServer.getInstance().getPluginManager().callEvent(new ConnectionCloseEvent(connection));
 			ProtocolStorage.removeConnection(connection.getRawAddress());
+		} else if (debugConnection) {
+			logger.info("[ps-debug] server channel inactive serverAddress={} clientAddress={} version={} player={}", ctx.channel().remoteAddress(), connection.getRawAddress(), connection.getVersion(), connection.getPlayer());
 		}
 	}
 
