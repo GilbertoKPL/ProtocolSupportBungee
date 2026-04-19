@@ -6,6 +6,8 @@ import io.netty.channel.ChannelPromise;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.protocol.packet.Handshake;
+import net.md_5.bungee.protocol.packet.LoginRequest;
 import protocolsupport.api.events.ConnectionCloseEvent;
 import protocolsupport.api.events.ConnectionOpenEvent;
 import protocolsupport.protocol.ConnectionImpl;
@@ -38,6 +40,15 @@ public class LogicHandler extends ChannelDuplexHandler {
 		if (msg == null) {
 			promise.setSuccess();
 			return;
+		}
+		if (debugConnection && !isClientConnection) {
+			if (msg instanceof Handshake) {
+				Handshake handshake = (Handshake) msg;
+				logger.info("[ps-debug] proxy->server handshake protocolVersion={} host={} port={} requestedProtocol={}",
+					handshake.getProtocolVersion(), handshake.getHost(), handshake.getPort(), handshake.getRequestedProtocol());
+			} else if (msg instanceof LoginRequest) {
+				logger.info("[ps-debug] proxy->server login request username={}", ((LoginRequest) msg).getData());
+			}
 		}
 		super.write(ctx, msg, promise);
 	}
