@@ -12,6 +12,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.DecoderException;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.concurrent.Future;
 import net.md_5.bungee.netty.PipelineUtils;
 import protocolsupport.api.ProtocolVersion;
@@ -33,6 +35,9 @@ import protocolsupport.utils.netty.ReplayingDecoderBuffer.EOFSignal;
 
 
 public class InitialPacketDecoder extends SimpleChannelInboundHandler<ByteBuf> {
+
+	private static final InternalLogger logger = InternalLoggerFactory.getInstance(InitialPacketDecoder.class);
+	private static final boolean debugConnection = Boolean.getBoolean("ps.debug.connection");
 
 	//TODO: a kick build for LEGACY versions
 	public static final Map<ProtocolVersion, IPipeLineBuilder> BUILDERS = new EnumMap<>(ProtocolVersion.class);
@@ -97,8 +102,14 @@ public class InitialPacketDecoder extends SimpleChannelInboundHandler<ByteBuf> {
 		cancelTask();
 		if (firstread) {
 			int firstbyte = buffer.readUnsignedByte();
+			if (debugConnection) {
+				logger.info("[ps-debug] initial decode first byte=0x{} channel={}", Integer.toHexString(firstbyte), ctx.channel());
+			}
 			if (firstbyte == EncapsulatedProtocolUtils.FIRST_BYTE) {
 				encapsulatedinfo = EncapsulatedProtocolUtils.readInfo(buffer);
+				if (debugConnection) {
+					logger.info("[ps-debug] encapsulated protocol detected compression={} spoofedAddress={}", encapsulatedinfo.hasCompression(), encapsulatedinfo.getAddress());
+				}
 				buffer.discardReadBytes();
 			}
 			buffer.readerIndex(0);
@@ -111,6 +122,9 @@ public class InitialPacketDecoder extends SimpleChannelInboundHandler<ByteBuf> {
 				decodeEncapsulated(ctx);
 			}
 		} catch (EOFSignal ex) {
+			if (debugConnection) {
+				logger.info("[ps-debug] waiting more bytes to detect protocol channel={} readable={}", ctx.channel(), buffer.readableBytes());
+			}
 		}
 	}
 
@@ -212,6 +226,9 @@ public class InitialPacketDecoder extends SimpleChannelInboundHandler<ByteBuf> {
 
 	protected void setProtocol(Channel channel, ProtocolVersion version) {
 		ConnectionImpl connection = prepare(channel, version);
+		if (debugConnection) {
+			logger.info("[ps-debug] protocol selected version={} rawAddress={} channel={}", version, connection.getRawAddress(), channel);
+		}
 		IPipeLineBuilder builder = InitialPacketDecoder.BUILDERS.get(connection.getVersion());
 		builder.buildBungeeClientCodec(channel, connection);
 		if (encapsulatedinfo == null) {
@@ -225,6 +242,9 @@ public class InitialPacketDecoder extends SimpleChannelInboundHandler<ByteBuf> {
 			}
 			if ((encapsulatedinfo.getAddress() != null) && connection.getRawAddress().getAddress().isLoopbackAddress()) {
 				connection.changeAddress(encapsulatedinfo.getAddress());
+				if (debugConnection) {
+					logger.info("[ps-debug] changed connection address from encapsulated payload to {}", encapsulatedinfo.getAddress());
+				}
 			}
 		}
 		buffer.readerIndex(0);
